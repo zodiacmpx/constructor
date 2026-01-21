@@ -239,11 +239,14 @@
       overflow:hidden;
       user-select:none;
 
-      /* IMPORTANT: allow smaller modules + avoid resize weirdness */
+      /* allow smaller modules + avoid resize weirdness */
       min-width: 140px;
 
       /* z-index fix (drag/resize selection) */
       z-index: 1;
+
+      /* helps interact on some browsers */
+      touch-action: none;
     }
     .module.selected{
       outline:3px solid rgba(75,47,191,.25);
@@ -449,8 +452,8 @@
 <script>
 /* ------------------------------ State ------------------------------ */
 
-const STORAGE_KEY = "saesa_monitor_builder_v2";
-let state = { version: 2, sections: [], selected: { sectionId: null, moduleId: null } };
+const STORAGE_KEY = "saesa_monitor_builder_v3";
+let state = { version: 3, sections: [], selected: { sectionId: null, moduleId: null } };
 const charts = new Map(); // moduleId -> Chart instance
 let interactBound = false;
 
@@ -502,10 +505,10 @@ function demoState(){
     mod("pie","Documentos abiertos", 7, 1, 5, 6, { data:{ labels:["Arribado","Despachado","Asignado","En bandeja"], values:[319,102,260,38] } }),
     mod("bar","Tareas del día", 1, 7, 7, 6, { data:{ labels:["Ejecutadas","En ejecución","Asignadas"], values:[82,56,125] } }),
     mod("card","Efectividad de despacho", 8, 7, 4, 3, { metric:{ value:"0.89%", label:"Efectividad de despacho" } }),
-    mod("card","Ocupación Brigada", 12-3, 7, 3, 3, { metric:{ value:"80%", label:"Ocupación Brigada" } })
+    mod("card","Ocupación Brigada", 9, 7, 4, 3, { metric:{ value:"80%", label:"Ocupación Brigada" } })
   );
 
-  return { version:2, sections:[s1,s2,s3], selected:{ sectionId:s1.id, moduleId:null } };
+  return { version:3, sections:[s1,s2,s3], selected:{ sectionId:s1.id, moduleId:null } };
 }
 
 /* ------------------------- Default Configs ------------------------- */
@@ -604,13 +607,20 @@ function render(){
         <div class="resize-handle"></div>
       `;
 
-      modEl.addEventListener("mousedown", (e)=>{
-        if(e.target?.dataset?.action) return;
+      /* ✅ FIX CRÍTICO:
+         Antes estabas seleccionando en mousedown y eso hacía render() inmediato,
+         rompiendo el drag/resize porque el DOM se recrea justo al iniciar.
+         Ahora seleccionamos en CLICK (no en mousedown).
+      */
+      modEl.addEventListener("click", (e)=>{
+        if(e.target?.closest?.("[data-action]")) return;
+        if(state.selected.moduleId === m.id && state.selected.sectionId === sec.id) return;
         select(sec.id, m.id);
       });
 
       modEl.querySelectorAll("[data-action]").forEach(btn=>{
         btn.addEventListener("click", (e)=>{
+          e.stopPropagation();
           const action = e.currentTarget.dataset.action;
           if(action === "delete") removeModule(sec.id, m.id);
           if(action === "edit") editModule(sec.id, m.id);
@@ -625,12 +635,14 @@ function render(){
 
     // wire section header buttons
     header.querySelector('[data-action="toggle-add"]').addEventListener("click", (e)=>{
+      e.stopPropagation();
       const sid = e.currentTarget.dataset.section;
       toggleAddMenu(sid);
     });
 
     header.querySelectorAll("[data-add]").forEach(btn=>{
       btn.addEventListener("click", (e)=>{
+        e.stopPropagation();
         const sid = e.currentTarget.dataset.section;
         const type = e.currentTarget.dataset.add;
         addModuleToSection(type, sid);
@@ -638,15 +650,17 @@ function render(){
       });
     });
 
-    header.querySelector('[data-action="rename-section"]').addEventListener("click", ()=>{
+    header.querySelector('[data-action="rename-section"]').addEventListener("click", (e)=>{
+      e.stopPropagation();
       renameSection(sec.id);
     });
-    header.querySelector('[data-action="delete-section"]').addEventListener("click", ()=>{
+    header.querySelector('[data-action="delete-section"]').addEventListener("click", (e)=>{
+      e.stopPropagation();
       deleteSection(sec.id);
     });
   });
 
-  setupInteract();
+  setupInteract();     // binds once, but selector-based works for new nodes
   rebuildCharts();
 }
 
@@ -775,7 +789,7 @@ document.getElementById("btnDuplicate").addEventListener("click", ()=>{
   const copy = structuredClone(m);
   copy.id = uid();
   copy.title = m.title + " (copia)";
-  copy.x = clampInt(m.x + 1, 1, 12);
+  copy.x = clampInt(m.x + 1, 1, colsFromCSS());
   copy.y = m.y + 1;
   sec.modules.push(copy);
 
@@ -979,10 +993,11 @@ function titleForType(type){
 }
 
 /* ---------------------------- Drag/Resize -------------------------- */
-/* FIX INTEGRATED:
-   - restrict to closest .grid (not generic parent)
-   - size minimum more permissive
-   - z-index handled in CSS above
+/*
+  ✅ Fixes integrados:
+  1) NO seleccionar en mousedown (ya corregido arriba) -> no rompe drag/resize
+  2) Restricción al .grid correcto
+  3) commitTransformToGrid calcula nuevo x/y/w/h según grilla
 */
 
 function setupInteract(){
@@ -1009,7 +1024,7 @@ function setupInteract(){
           target.setAttribute("data-ty", y);
         },
         end(event){
-          commitTransformToGrid(event.target);
+          commitTransformToGrid(event.target, false);
         }
       }
     })
@@ -1055,25 +1070,28 @@ function commitTransformToGrid(moduleEl, includeResize=false){
   if(!m) return;
 
   const gridEl = moduleEl.closest(".grid");
+  if(!gridEl) return;
+
   const gridRect = gridEl.getBoundingClientRect();
   const modRect = moduleEl.getBoundingClientRect();
 
-  const left = modRect.left - gridRect.left;
-  const top  = modRect.top  - gridRect.top;
+  const rootStyle = getComputedStyle(document.documentElement);
+  const gap  = parsePx(rootStyle.getPropertyValue("--gap"));
+  const pad  = parsePx(rootStyle.getPropertyValue("--gridPad"));
+  const rowH = parsePx(rootStyle.getPropertyValue("--row"));
+  const cols = colsFromCSS();
 
-  const gap = parsePx(getComputedStyle(document.documentElement).getPropertyValue("--gap"));
-  const pad = parsePx(getComputedStyle(document.documentElement).getPropertyValue("--gridPad"));
-  const rowH = parsePx(getComputedStyle(document.documentElement).getPropertyValue("--row"));
-
-  const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--cols")) || 12;
   const usableW = gridRect.width - (pad*2);
   const colW = (usableW - (gap * (cols - 1))) / cols;
 
   const stepX = colW + gap;
   const stepY = rowH + gap;
 
-  let newX = clampInt(Math.round((left - pad) / stepX) + 1, 1, cols);
-  let newY = Math.max(1, Math.round((top - pad) / stepY) + 1);
+  const left = (modRect.left - gridRect.left) - pad;
+  const top  = (modRect.top  - gridRect.top)  - pad;
+
+  let newX = clampInt(Math.round(left / stepX) + 1, 1, cols);
+  let newY = Math.max(1, Math.round(top / stepY) + 1);
 
   m.x = newX;
   m.y = newY;
@@ -1085,7 +1103,7 @@ function commitTransformToGrid(moduleEl, includeResize=false){
     m.h = Math.max(1, h);
   }
 
-  /* Extra safety: keep module fully inside grid columns */
+  // Mantener dentro del ancho
   if(m.x + m.w - 1 > cols){
     m.x = Math.max(1, cols - m.w + 1);
   }
@@ -1097,6 +1115,7 @@ function commitTransformToGrid(moduleEl, includeResize=false){
   moduleEl.style.width = "";
   moduleEl.style.height = "";
 
+  // NO hacemos render durante drag; sólo al finalizar (acá) está bien.
   save();
   render();
 }
@@ -1176,6 +1195,10 @@ function parsePx(v){
   const n = Number(String(v).replace("px","").trim());
   return Number.isFinite(n) ? n : 0;
 }
+function colsFromCSS(){
+  const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--cols")) || 12;
+  return cols;
+}
 
 /* ------------------------------ Boot ------------------------------- */
 
@@ -1184,4 +1207,3 @@ render();
 </script>
 </body>
 </html>
-
