@@ -266,6 +266,17 @@
       z-index: 20; /* Selected higher than hover */
     }
 
+    .module.is-locked .mod-top{
+      cursor:not-allowed;
+    }
+    .module.is-locked .mod-body{
+      cursor:default;
+    }
+    .module.is-locked .resize-handle{
+      opacity:0;
+      pointer-events:none;
+    }
+
     .module .mod-top{
       display:flex;
       align-items:center;
@@ -482,6 +493,11 @@ function load(){
     state = demoState();
     save();
   }
+  state.sections.forEach(sec=>{
+    sec.modules.forEach(m=>{
+      if(typeof m.locked !== "boolean") m.locked = true;
+    });
+  });
   // Validación de seguridad
   if(!state.selected) state.selected = { sectionId: state.sections[0]?.id ?? null, moduleId: null };
   if(!state.selected.sectionId && state.sections[0]) state.selected.sectionId = state.sections[0].id;
@@ -494,6 +510,7 @@ function demoState(){
 
   const mod = (type, title, x, y, w, h, extra={}) => ({
     id: uid(), type, title, x, y, w, h,
+    locked: true,
     config: { ...defaultConfig(type), ...extra }
   });
 
@@ -603,10 +620,14 @@ function render(){
       modEl.dataset.sectionId = sec.id;
 
       if(state.selected.moduleId === m.id) modEl.classList.add("selected");
+      if(m.locked) modEl.classList.add("is-locked");
 
       // placement
       modEl.style.gridColumn = `${m.x} / span ${m.w}`;
       modEl.style.gridRow = `${m.y} / span ${m.h}`;
+
+      const lockIcon = m.locked ? "🔒" : "🔓";
+      const lockTitle = m.locked ? "Desbloquear mover/redimensionar" : "Bloquear mover/redimensionar";
 
       modEl.innerHTML = `
         <div class="mod-top">
@@ -615,6 +636,7 @@ function render(){
             <span class="t">${escapeHtml(m.title)}</span>
           </div>
           <div class="mod-actions">
+            <button class="icon-btn" title="${lockTitle}" data-action="toggle-lock">${lockIcon}</button>
             <button class="icon-btn" title="Editar" data-action="edit">✎</button>
             <button class="icon-btn" title="Borrar" data-action="delete">🗑</button>
           </div>
@@ -636,6 +658,7 @@ function render(){
           const action = e.currentTarget.dataset.action;
           if(action === "delete") removeModule(sec.id, m.id);
           if(action === "edit") editModule(sec.id, m.id);
+          if(action === "toggle-lock") toggleModuleLock(sec.id, m.id);
         });
       });
 
@@ -892,6 +915,7 @@ function addModuleToSection(type, sectionId){
     y: y,
     w: (type==="card" ? 4 : 4),
     h: (type==="card" ? 5 : 7),
+    locked: true,
     config: defaultConfig(type)
   };
 
@@ -991,6 +1015,15 @@ function editModule(sectionId, moduleId){
   render();
 }
 
+function toggleModuleLock(sectionId, moduleId){
+  const sec = state.sections.find(s=>s.id===sectionId);
+  const m = sec?.modules.find(x=>x.id===moduleId);
+  if(!m) return;
+  m.locked = !m.locked;
+  save();
+  render();
+}
+
 function titleForType(type){
   if(type==="card") return "Tarjeta";
   if(type==="pie") return "Gráfico circular";
@@ -1018,6 +1051,10 @@ function setupInteract(){
       ],
       listeners: {
         start(event){
+          if(isModuleLockedEl(event.target)){
+            event.interaction.stop();
+            return;
+          }
           event.target.classList.add("is-dragging");
         },
         move(event){
@@ -1047,6 +1084,10 @@ function setupInteract(){
       ],
       listeners: {
         start(event){
+          if(isModuleLockedEl(event.target)){
+            event.interaction.stop();
+            return;
+          }
           event.target.classList.add("is-dragging");
         },
         move(event){
@@ -1207,6 +1248,13 @@ function parsePx(v){
 function colsFromCSS(){
   const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--cols")) || 12;
   return cols;
+}
+function isModuleLockedEl(moduleEl){
+  const sectionId = moduleEl.dataset.sectionId;
+  const moduleId = moduleEl.dataset.moduleId;
+  const sec = state.sections.find(s=>s.id===sectionId);
+  const m = sec?.modules.find(x=>x.id===moduleId);
+  return !!m?.locked;
 }
 
 /* ------------------------------ Boot ------------------------------- */
