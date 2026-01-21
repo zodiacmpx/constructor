@@ -3,10 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Monitor en Línea — Builder (Corregido)</title>
+  <title>Monitor en Línea — Builder (Fix definitivo)</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
 
   <style>
@@ -21,11 +20,9 @@
       --radius:14px;
 
       --gap: 12px;
-
-      /* grid math */
-      --cols: 12;       /* columnas lógicas */
-      --row: 48px;      /* alto de fila */
-      --gridPad: 12px; /* padding interno del grid */
+      --cols: 12;
+      --row: 48px;
+      --gridPad: 12px;
     }
 
     *{ box-sizing:border-box; }
@@ -125,10 +122,8 @@
       white-space:nowrap;
     }
 
-    /* Canvas */
     .canvas{ padding:0 22px 28px; }
 
-    /* Section */
     .section{
       background:transparent;
       margin:14px 0 18px;
@@ -167,11 +162,7 @@
 
     .muted{ color:var(--muted); font-weight:700; }
 
-    /* Add menu (per section) */
-    .add-wrap{
-      position:relative;
-      display:inline-block;
-    }
+    .add-wrap{ position:relative; display:inline-block; }
     .add-menu{
       position:absolute;
       top:44px;
@@ -210,72 +201,54 @@
       margin-left:10px;
     }
 
-    /* Grid: FULL WIDTH + RESPONSIVE */
+    /* GRID AHORA ES CONTENEDOR ABSOLUTO */
     .grid{
       position:relative;
       width:100%;
-      display:grid;
-      gap: var(--gap);
-      align-content:start;
+      height: auto;
+      min-height: calc(var(--row) * 8);
       padding: var(--gridPad);
       background:rgba(255,255,255,.35);
       border:1px solid var(--line);
       border-radius: var(--radius);
       overflow:hidden;
-
-      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-      grid-auto-rows: var(--row);
     }
 
-    /* Module */
+    /* MÓDULO: ABSOLUTO (FIX REAL) */
     .module{
-      position:relative;
+      position:absolute;
       background:var(--panel);
       border:1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow:hidden;
       user-select:none;
-
-      /* allow smaller modules + avoid resize weirdness */
       min-width: 140px;
-
-      /* z-index base */
       z-index: 1;
 
-      /* helps interact on some browsers */
       touch-action: none;
       transition: box-shadow 0.2s, z-index 0s;
     }
 
-    /* --- FIX: Elevar módulo al pasar el mouse para facilitar agarre en superposiciones --- */
     .module:hover {
       z-index: 10;
       box-shadow: 0 8px 24px rgba(18, 38, 63, .12);
     }
-    /* --- FIX: Elevar módulo al arrastrar --- */
     .module.is-dragging {
       z-index: 100 !important;
-      opacity: 0.95;
+      opacity: 0.96;
       box-shadow: 0 12px 30px rgba(75, 47, 191, .2);
     }
 
     .module.selected{
       outline:3px solid rgba(75,47,191,.25);
       border-color: rgba(75,47,191,.45);
-      z-index: 20; /* Selected higher than hover */
+      z-index: 20;
     }
 
-    .module.is-locked .mod-top{
-      cursor:not-allowed;
-    }
-    .module.is-locked .mod-body{
-      cursor:default;
-    }
-    .module.is-locked .resize-handle{
-      opacity:0;
-      pointer-events:none;
-    }
+    .module.is-locked .mod-top{ cursor:not-allowed; }
+    .module.is-locked .mod-body{ cursor:default; }
+    .module.is-locked .resize-handle{ opacity:0; pointer-events:none; }
 
     .module .mod-top{
       display:flex;
@@ -284,8 +257,7 @@
       padding:10px 12px;
       border-bottom:1px solid var(--line);
       background:linear-gradient(180deg, #ffffff, #fbfcff);
-      cursor:move; /* cursor de movimiento */
-
+      cursor:move;
       position:relative;
       z-index: 2;
     }
@@ -333,7 +305,6 @@
       justify-content:center;
     }
 
-    /* Card metric */
     .metric{
       width:100%;
       height:100%;
@@ -364,7 +335,6 @@
       font-weight:800;
     }
 
-    /* Chart wrapper */
     .chart-wrap{
       width:100%;
       height:100%;
@@ -372,7 +342,6 @@
     }
     canvas{ width:100% !important; height:100% !important; }
 
-    /* Status bar */
     .status{
       width:100%;
       display:flex;
@@ -407,6 +376,7 @@
       position:absolute;
       top:0;
       left:0;
+      transform: translateX(0);
     }
 
     .resize-handle{
@@ -424,7 +394,6 @@
       z-index:3;
     }
 
-    /* Responsive tweaks */
     @media (max-width: 1200px){
       :root{ --row: 52px; }
       .hint{ display:none; }
@@ -463,10 +432,9 @@
     </label>
 
     <div class="hint">
-      <div class="chip">Arrastra por el encabezado o el cuerpo</div>
+      <div class="chip">Desbloquea 🔓 para mover/redimensionar</div>
+      <div class="chip">Arrastra por el encabezado o cuerpo</div>
       <div class="chip">Redimensiona desde bordes/esquina</div>
-      <div class="chip">Click para seleccionar</div>
-      <div class="chip">Auto-guardado</div>
     </div>
   </div>
 
@@ -475,10 +443,9 @@
 <script>
 /* ------------------------------ State ------------------------------ */
 
-const STORAGE_KEY = "saesa_monitor_builder_v3_fixed";
-let state = { version: 3, sections: [], selected: { sectionId: null, moduleId: null } };
+const STORAGE_KEY = "saesa_monitor_builder_v4_absolute";
+let state = { version: 4, sections: [], selected: { sectionId: null, moduleId: null } };
 const charts = new Map(); // moduleId -> Chart instance
-let interactBound = false;
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(2, 6);
 
@@ -498,7 +465,6 @@ function load(){
       if(typeof m.locked !== "boolean") m.locked = true;
     });
   });
-  // Validación de seguridad
   if(!state.selected) state.selected = { sectionId: state.sections[0]?.id ?? null, moduleId: null };
   if(!state.selected.sectionId && state.sections[0]) state.selected.sectionId = state.sections[0].id;
 }
@@ -514,7 +480,6 @@ function demoState(){
     config: { ...defaultConfig(type), ...extra }
   });
 
-  // Sección 1
   s1.modules.push(
     mod("pie", "Brigadas activas", 1, 1, 3, 6, { data:{ labels:["Jefe de Faena","Jefe Turno","Guardia SAE","Apoyo Contingencia","Otras"], values:[883,313,414,175,92] } }),
     mod("card","Documentos despachados", 4, 1, 2, 6, { metric:{ value:"180", label:"Documentos despachados", sub:"Hoy" } }),
@@ -523,7 +488,6 @@ function demoState(){
     mod("status","Complejidad operacional", 6, 7, 4, 6, { status:{ score:9.5, desc:"(tareas activas + fallas nuevas) / brigadas disponibles\nVerde <4 · Amarillo 4–6 · Rojo >6", pin:0.72 } })
   );
 
-  // Sección 2
   s2.modules.push(
     mod("card","Tiempo medio de asignación de brigada", 1, 1, 4, 5, { metric:{ value:"01:15:27", label:"Asignación brigada" } }),
     mod("card","Tiempo de concurrencia a falla", 5, 1, 4, 5, { metric:{ value:"02:47:51", label:"Concurrencia a falla" } }),
@@ -532,7 +496,6 @@ function demoState(){
     mod("card","Complejidad PT", 8, 6, 5, 6, { metric:{ value:"ALTO", label:"Complejidad PT", sub:"(Ejemplo)" }, bigColor:"#111827" })
   );
 
-  // Sección 3
   s3.modules.push(
     mod("bar","Concurrencia ante fallas (hoy)", 1, 1, 6, 6, { data:{ labels:["Dentro","Fuera"], values:[94,9] } }),
     mod("pie","Documentos abiertos", 7, 1, 5, 6, { data:{ labels:["Arribado","Despachado","Asignado","En bandeja"], values:[319,102,260,38] } }),
@@ -541,7 +504,7 @@ function demoState(){
     mod("card","Ocupación Brigada", 8, 10, 4, 3, { metric:{ value:"80%", label:"Ocupación Brigada" } })
   );
 
-  return { version:3, sections:[s1,s2,s3], selected:{ sectionId:s1.id, moduleId:null } };
+  return { version:4, sections:[s1,s2,s3], selected:{ sectionId:s1.id, moduleId:null } };
 }
 
 /* ------------------------- Default Configs ------------------------- */
@@ -581,7 +544,6 @@ function render(){
     section.className = "section";
     section.dataset.sectionId = sec.id;
 
-    // header con (+) propio
     const header = document.createElement("div");
     header.className = "section-header";
     header.innerHTML = `
@@ -622,10 +584,6 @@ function render(){
       if(state.selected.moduleId === m.id) modEl.classList.add("selected");
       if(m.locked) modEl.classList.add("is-locked");
 
-      // placement
-      modEl.style.gridColumn = `${m.x} / span ${m.w}`;
-      modEl.style.gridRow = `${m.y} / span ${m.h}`;
-
       const lockIcon = m.locked ? "🔒" : "🔓";
       const lockTitle = m.locked ? "Desbloquear mover/redimensionar" : "Bloquear mover/redimensionar";
 
@@ -645,7 +603,6 @@ function render(){
         <div class="resize-handle"></div>
       `;
 
-      // Selección: Usamos CLICK, no mousedown
       modEl.addEventListener("click", (e)=>{
         if(e.target?.closest?.("[data-action]")) return;
         if(state.selected.moduleId === m.id && state.selected.sectionId === sec.id) return;
@@ -663,24 +620,24 @@ function render(){
       });
 
       grid.appendChild(modEl);
+
+      // IMPORTANT: colocar el módulo en pixeles (grid lógico -> px)
+      placeModuleInPixels(grid, modEl, m);
     });
 
     section.appendChild(grid);
     elCanvas.appendChild(section);
 
-    // wire section header buttons
+    // header actions
     header.querySelector('[data-action="toggle-add"]').addEventListener("click", (e)=>{
       e.stopPropagation();
-      const sid = e.currentTarget.dataset.section;
-      toggleAddMenu(sid);
+      toggleAddMenu(e.currentTarget.dataset.section);
     });
 
     header.querySelectorAll("[data-add]").forEach(btn=>{
       btn.addEventListener("click", (e)=>{
         e.stopPropagation();
-        const sid = e.currentTarget.dataset.section;
-        const type = e.currentTarget.dataset.add;
-        addModuleToSection(type, sid);
+        addModuleToSection(e.currentTarget.dataset.add, e.currentTarget.dataset.section);
         closeAllAddMenus();
       });
     });
@@ -695,8 +652,10 @@ function render(){
     });
   });
 
+  // BIND interact SIEMPRE después de render (sin "interactBound" que te rompe el DOM dinámico)
   setupInteract();
   rebuildCharts();
+  adjustAllGridHeights();
 }
 
 /* ------------------------------ Menús ------------------------------ */
@@ -913,7 +872,7 @@ function addModuleToSection(type, sectionId){
     title: titleForType(type),
     x: 1,
     y: y,
-    w: (type==="card" ? 4 : 4),
+    w: 4,
     h: (type==="card" ? 5 : 7),
     locked: true,
     config: defaultConfig(type)
@@ -1001,7 +960,7 @@ function editModule(sectionId, moduleId){
       const n = Number(score);
       if(Number.isFinite(n)) m.config.status.score = n;
     }
-    const desc = prompt("Descripción (usa \n para saltos):", String(m.config.status?.desc ?? ""));
+    const desc = prompt("Descripción (usa \\n para saltos):", String(m.config.status?.desc ?? ""));
     if(desc !== null) m.config.status.desc = desc.replaceAll("\\n", "\n");
 
     const pin = prompt("Pin 0..1 (ej: 0.72):", String(m.config.status?.pin ?? 0.5));
@@ -1032,11 +991,84 @@ function titleForType(type){
   return "Módulo";
 }
 
+/* ---------------------- Pixel placement & snapping ---------------------- */
+
+function getGridMetrics(gridEl){
+  const rootStyle = getComputedStyle(document.documentElement);
+  const gap  = parsePx(rootStyle.getPropertyValue("--gap"));
+  const pad  = parsePx(rootStyle.getPropertyValue("--gridPad"));
+  const rowH = parsePx(rootStyle.getPropertyValue("--row"));
+  const cols = colsFromCSS();
+
+  const usableW = gridEl.clientWidth - (pad*2);
+  const colW = (usableW - (gap * (cols - 1))) / cols;
+
+  const stepX = colW + gap;
+  const stepY = rowH + gap;
+
+  return { gap, pad, rowH, cols, colW, stepX, stepY };
+}
+
+function placeModuleInPixels(gridEl, moduleEl, m){
+  const { pad, colW, rowH, stepX, stepY } = getGridMetrics(gridEl);
+
+  const left = pad + (m.x - 1) * stepX;
+  const top  = pad + (m.y - 1) * stepY;
+  const width  = (m.w * colW) + ((m.w - 1) * (stepX - colW)); // w*colW + gaps
+  const height = (m.h * rowH) + ((m.h - 1) * (stepY - rowH));
+
+  moduleEl.style.left = left + "px";
+  moduleEl.style.top = top + "px";
+  moduleEl.style.width = width + "px";
+  moduleEl.style.height = height + "px";
+
+  moduleEl.style.transform = ""; // importante: no usamos translate para layout base
+  moduleEl.removeAttribute("data-tx");
+  moduleEl.removeAttribute("data-ty");
+}
+
+function snapPixelsToGrid(gridEl, moduleEl, includeResize){
+  const sectionId = moduleEl.dataset.sectionId;
+  const moduleId  = moduleEl.dataset.moduleId;
+  const sec = state.sections.find(s=>s.id===sectionId);
+  const m = sec?.modules.find(x=>x.id===moduleId);
+  if(!m) return;
+
+  const { pad, cols, stepX, stepY, colW, rowH, gap } = getGridMetrics(gridEl);
+
+  const left = parsePx(moduleEl.style.left) - pad;
+  const top  = parsePx(moduleEl.style.top) - pad;
+
+  let newX = clampInt(Math.round(left / stepX) + 1, 1, cols);
+  let newY = Math.max(1, Math.round(top / stepY) + 1);
+
+  m.x = newX;
+  m.y = newY;
+
+  if(includeResize){
+    const wPx = parsePx(moduleEl.style.width);
+    const hPx = parsePx(moduleEl.style.height);
+
+    // número de columnas/filas aproximando por step
+    let w = Math.max(1, Math.round((wPx + gap) / stepX));
+    let h = Math.max(1, Math.round((hPx + gap) / stepY));
+
+    m.w = clampInt(w, 1, cols);
+    m.h = h;
+  }
+
+  if(m.x + m.w - 1 > cols){
+    m.x = Math.max(1, cols - m.w + 1);
+  }
+
+  save();
+}
+
 /* ---------------------------- Drag/Resize -------------------------- */
 
 function setupInteract(){
-  if(interactBound) return;
-  interactBound = true;
+  // Reset bindings to avoid ghost instances when re-rendering
+  interact(".module").unset();
 
   interact(".module")
     .draggable({
@@ -1058,16 +1090,27 @@ function setupInteract(){
           event.target.classList.add("is-dragging");
         },
         move(event){
-          const target = event.target;
-          const x = (parseFloat(target.getAttribute("data-tx")) || 0) + event.dx;
-          const y = (parseFloat(target.getAttribute("data-ty")) || 0) + event.dy;
-          target.style.transform = `translate(${x}px, ${y}px)`;
-          target.setAttribute("data-tx", x);
-          target.setAttribute("data-ty", y);
+          const t = event.target;
+
+          // mover en px reales (left/top) dentro del grid
+          const left = (parsePx(t.style.left) || 0) + event.dx;
+          const top  = (parsePx(t.style.top)  || 0) + event.dy;
+
+          t.style.left = left + "px";
+          t.style.top = top + "px";
         },
         end(event){
-          event.target.classList.remove("is-dragging");
-          commitTransformToGrid(event.target, false);
+          const t = event.target;
+          t.classList.remove("is-dragging");
+          const gridEl = t.closest(".grid");
+          if(!gridEl) return;
+          snapPixelsToGrid(gridEl, t, false);
+          // re-colocar exacto al snap
+          const sec = state.sections.find(s=>s.id===t.dataset.sectionId);
+          const m = sec?.modules.find(x=>x.id===t.dataset.moduleId);
+          if(m) placeModuleInPixels(gridEl, t, m);
+          adjustGridHeight(gridEl);
+          save();
         }
       }
     })
@@ -1091,83 +1134,34 @@ function setupInteract(){
           event.target.classList.add("is-dragging");
         },
         move(event){
-          const target = event.target;
-          let x = (parseFloat(target.getAttribute("data-tx")) || 0);
-          let y = (parseFloat(target.getAttribute("data-ty")) || 0);
+          const t = event.target;
 
-          target.style.width  = event.rect.width + "px";
-          target.style.height = event.rect.height + "px";
+          const newLeft = (parsePx(t.style.left) || 0) + event.deltaRect.left;
+          const newTop  = (parsePx(t.style.top)  || 0) + event.deltaRect.top;
 
-          x += event.deltaRect.left;
-          y += event.deltaRect.top;
-
-          target.style.transform = `translate(${x}px, ${y}px)`;
-          target.setAttribute("data-tx", x);
-          target.setAttribute("data-ty", y);
+          t.style.left = newLeft + "px";
+          t.style.top  = newTop + "px";
+          t.style.width  = event.rect.width + "px";
+          t.style.height = event.rect.height + "px";
         },
         end(event){
-          event.target.classList.remove("is-dragging");
-          commitTransformToGrid(event.target, true);
+          const t = event.target;
+          t.classList.remove("is-dragging");
+          const gridEl = t.closest(".grid");
+          if(!gridEl) return;
+
+          snapPixelsToGrid(gridEl, t, true);
+          const sec = state.sections.find(s=>s.id===t.dataset.sectionId);
+          const m = sec?.modules.find(x=>x.id===t.dataset.moduleId);
+          if(m) placeModuleInPixels(gridEl, t, m);
+
+          adjustGridHeight(gridEl);
+          save();
+          // re-render para actualizar charts correctamente con el nuevo tamaño
+          render();
         }
       }
     });
-}
-
-function commitTransformToGrid(moduleEl, includeResize=false){
-  const sectionId = moduleEl.dataset.sectionId;
-  const moduleId  = moduleEl.dataset.moduleId;
-  const sec = state.sections.find(s=>s.id===sectionId);
-  const m = sec?.modules.find(x=>x.id===moduleId);
-  if(!m) return;
-
-  const gridEl = moduleEl.closest(".grid");
-  if(!gridEl) return;
-
-  const gridRect = gridEl.getBoundingClientRect();
-  const modRect = moduleEl.getBoundingClientRect();
-
-  const rootStyle = getComputedStyle(document.documentElement);
-  const gap  = parsePx(rootStyle.getPropertyValue("--gap"));
-  const pad  = parsePx(rootStyle.getPropertyValue("--gridPad"));
-  const rowH = parsePx(rootStyle.getPropertyValue("--row"));
-  const cols = colsFromCSS();
-
-  const usableW = gridRect.width - (pad*2);
-  const colW = (usableW - (gap * (cols - 1))) / cols;
-
-  const stepX = colW + gap;
-  const stepY = rowH + gap;
-
-  const left = (modRect.left - gridRect.left) - pad;
-  const top  = (modRect.top  - gridRect.top)  - pad;
-
-  let newX = clampInt(Math.round(left / stepX) + 1, 1, cols);
-  let newY = Math.max(1, Math.round(top / stepY) + 1);
-
-  m.x = newX;
-  m.y = newY;
-
-  if(includeResize){
-    let w = Math.max(1, Math.round(modRect.width / stepX));
-    let h = Math.max(1, Math.round(modRect.height / stepY));
-    m.w = clampInt(w, 1, cols);
-    m.h = Math.max(1, h);
-  }
-
-  // Mantener dentro del ancho
-  if(m.x + m.w - 1 > cols){
-    m.x = Math.max(1, cols - m.w + 1);
-  }
-
-  // reset temp transforms
-  moduleEl.style.transform = "";
-  moduleEl.removeAttribute("data-tx");
-  moduleEl.removeAttribute("data-ty");
-  moduleEl.style.width = "";
-  moduleEl.style.height = "";
-
-  save();
-  render();
 }
 
 /* ------------------------------ Charts ----------------------------- */
@@ -1229,6 +1223,29 @@ function rebuildCharts(){
   });
 }
 
+/* -------------------- Grid height (para que no corte) ------------------- */
+
+function adjustGridHeight(gridEl){
+  const sectionId = gridEl.dataset.sectionId;
+  const sec = state.sections.find(s=>s.id===sectionId);
+  if(!sec) return;
+
+  const rootStyle = getComputedStyle(document.documentElement);
+  const gap  = parsePx(rootStyle.getPropertyValue("--gap"));
+  const rowH = parsePx(rootStyle.getPropertyValue("--row"));
+
+  // calcular fila máxima utilizada
+  const maxRow = sec.modules.reduce((mx, m)=> Math.max(mx, m.y + m.h - 1), 1);
+  const pad = parsePx(rootStyle.getPropertyValue("--gridPad"));
+  const height = pad*2 + (maxRow * rowH) + ((maxRow - 1) * gap);
+
+  gridEl.style.minHeight = Math.max(height, rowH * 8) + "px";
+}
+
+function adjustAllGridHeights(){
+  document.querySelectorAll(".grid").forEach(adjustGridHeight);
+}
+
 /* ------------------------------ Utils ------------------------------ */
 
 function escapeHtml(str){
@@ -1261,6 +1278,12 @@ function isModuleLockedEl(moduleEl){
 
 load();
 render();
+
+// Recalcular posiciones en resize (responsive)
+window.addEventListener("resize", ()=>{
+  // re-render re-coloca módulos según nuevo ancho/cols
+  render();
+});
 </script>
 </body>
 </html>
