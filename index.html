@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Monitor en Línea — Builder (Corregido)</title>
+  <title>Monitor en Línea — Builder (Corregido V2)</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
@@ -23,9 +23,9 @@
       --gap: 12px;
 
       /* grid math */
-      --cols: 12;       /* columnas lógicas */
-      --row: 48px;      /* alto de fila */
-      --gridPad: 12px; /* padding interno del grid */
+      --cols: 12;       
+      --row: 48px;      
+      --gridPad: 12px; 
     }
 
     *{ box-sizing:border-box; }
@@ -46,7 +46,7 @@
       gap:16px;
       position:sticky;
       top:0;
-      z-index:50;
+      z-index:1000;
     }
     .topbar .title{
       font-weight:800;
@@ -125,10 +125,8 @@
       white-space:nowrap;
     }
 
-    /* Canvas */
     .canvas{ padding:0 22px 28px; }
 
-    /* Section */
     .section{
       background:transparent;
       margin:14px 0 18px;
@@ -141,14 +139,6 @@
       margin:10px 0;
       gap:10px;
     }
-
-    .section-header-left{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
     .section-header h2{
       margin:0;
       font-size:14px;
@@ -156,61 +146,32 @@
       letter-spacing:.9px;
       color:#3b4a63;
     }
-
-    .section-actions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:flex-end;
+    .section-header-left{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
     }
-
+    .section-actions{
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end;
+    }
     .muted{ color:var(--muted); font-weight:700; }
 
-    /* Add menu (per section) */
-    .add-wrap{
-      position:relative;
-      display:inline-block;
-    }
+    /* Add menu */
+    .add-wrap{ position:relative; display:inline-block; }
     .add-menu{
-      position:absolute;
-      top:44px;
-      left:0;
-      width:220px;
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:12px;
-      box-shadow: var(--shadow);
-      padding:8px;
-      display:none;
-      z-index:60;
+      position:absolute; top:44px; left:0; width:220px;
+      background:#fff; border:1px solid var(--line); border-radius:12px;
+      box-shadow: var(--shadow); padding:8px; display:none; z-index:2000;
     }
     .add-menu.open{ display:block; }
     .menu-item{
-      width:100%;
-      border:1px solid transparent;
-      background:#fff;
-      padding:10px 10px;
-      border-radius:10px;
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      font-weight:800;
-      color:#22304a;
+      width:100%; border:1px solid transparent; background:#fff;
+      padding:10px 10px; border-radius:10px; cursor:pointer;
+      display:flex; align-items:center; justify-content:space-between;
+      font-weight:800; color:#22304a;
     }
-    .menu-item:hover{
-      background:#f6f8fc;
-      border-color:#eef2ff;
-    }
-    .menu-desc{
-      font-size:12px;
-      color:var(--muted);
-      font-weight:700;
-      margin-left:10px;
-    }
+    .menu-item:hover{ background:#f6f8fc; border-color:#eef2ff; }
+    .menu-desc{ font-size:12px; color:var(--muted); font-weight:700; margin-left:10px; }
 
-    /* Grid: FULL WIDTH + RESPONSIVE */
+    /* Grid */
     .grid{
       position:relative;
       width:100%;
@@ -221,7 +182,8 @@
       background:rgba(255,255,255,.35);
       border:1px solid var(--line);
       border-radius: var(--radius);
-      overflow:hidden;
+      /* IMPORTANTE: Evita overflow visible pero permite resize handles */
+      overflow:visible; 
 
       grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
       grid-auto-rows: var(--row);
@@ -234,36 +196,31 @@
       border:1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      overflow:hidden;
       user-select:none;
-
-      /* allow smaller modules + avoid resize weirdness */
-      min-width: 140px;
-
-      /* z-index base */
-      z-index: 1;
-
-      /* helps interact on some browsers */
-      touch-action: none;
-      transition: box-shadow 0.2s, z-index 0s;
-    }
-
-    /* --- FIX: Elevar módulo al pasar el mouse para facilitar agarre en superposiciones --- */
-    .module:hover {
+      min-width: 100px; 
+      min-height: 100px;
+      
+      /* Touch action crucial para drag en movil/touch */
+      touch-action: none; 
+      
       z-index: 10;
-      box-shadow: 0 8px 24px rgba(18, 38, 63, .12);
-    }
-    /* --- FIX: Elevar módulo al arrastrar --- */
-    .module.is-dragging {
-      z-index: 100 !important;
-      opacity: 0.95;
-      box-shadow: 0 12px 30px rgba(75, 47, 191, .2);
     }
 
+    /* Estados de interacción */
+    .module:hover { z-index: 20; border-color:#b8c2d3; }
+    .module.is-dragging { 
+      z-index: 100 !important; 
+      opacity: 0.9; 
+      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    }
+    .module.is-resizing {
+      z-index: 100 !important;
+      opacity: 0.9;
+    }
     .module.selected{
       outline:3px solid rgba(75,47,191,.25);
       border-color: rgba(75,47,191,.45);
-      z-index: 20; /* Selected higher than hover */
+      z-index: 30;
     }
 
     .module .mod-top{
@@ -273,188 +230,124 @@
       padding:10px 12px;
       border-bottom:1px solid var(--line);
       background:linear-gradient(180deg, #ffffff, #fbfcff);
-      cursor:move; /* cursor de movimiento */
-
-      position:relative;
-      z-index: 2;
+      cursor:grab;
+      
+      /* IMPORTANTE para el drag handle */
+      touch-action: none;
     }
+    .module .mod-top:active { cursor: grabbing; }
+
     .module .mod-title{
-      font-size:13px;
-      font-weight:900;
-      color:#22304a;
-      display:flex;
-      gap:10px;
-      align-items:center;
+      font-size:13px; font-weight:900; color:#22304a;
+      display:flex; gap:10px; align-items:center;
+      pointer-events: none; /* Dejar pasar clic al padre */
     }
     .badge{
-      font-size:11px;
-      font-weight:900;
-      padding:3px 8px;
-      border-radius:999px;
-      background:#eef2ff;
-      color:var(--brand);
+      font-size:11px; font-weight:900; padding:3px 8px;
+      border-radius:999px; background:#eef2ff; color:var(--brand);
       border:1px solid #dfe4ff;
     }
     .module .mod-actions{
-      display:flex;
-      gap:6px;
-      align-items:center;
+      display:flex; gap:6px; align-items:center;
     }
     .icon-btn{
-      border:1px solid var(--line);
-      background:#fff;
-      width:28px;height:28px;
-      border-radius:9px;
-      cursor:pointer;
-      display:grid;
-      place-items:center;
-      font-weight:900;
-      color:#3b4a63;
+      border:1px solid var(--line); background:#fff;
+      width:28px; height:28px; border-radius:9px; cursor:pointer;
+      display:grid; place-items:center; font-weight:900; color:#3b4a63;
+      pointer-events: auto; /* Restaurar clicks */
     }
     .icon-btn:hover{ background:#f6f8fc; }
 
     .module .mod-body{
       padding:12px;
       height: calc(100% - 44px);
-      display:flex;
-      gap:12px;
-      align-items:center;
-      justify-content:center;
+      display:flex; gap:12px; align-items:center; justify-content:center;
+      overflow:hidden;
     }
 
-    /* Card metric */
+    /* Metric styles */
     .metric{
-      width:100%;
-      height:100%;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      text-align:center;
+      width:100%; height:100%; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:8px; text-align:center;
     }
     .metric .big{
-      font-size:42px;
-      font-weight:1000;
-      letter-spacing:.2px;
-      color:#0d3b8f;
-      line-height:1;
+      font-size:42px; font-weight:1000; letter-spacing:.2px;
+      color:#0d3b8f; line-height:1;
     }
     .metric .label{
-      font-size:12px;
-      color:var(--muted);
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.8px;
+      font-size:12px; color:var(--muted); font-weight:800;
+      text-transform:uppercase; letter-spacing:.8px;
     }
-    .metric .sub{
-      font-size:12px;
-      color:#2b3a55;
-      font-weight:800;
-    }
+    .metric .sub{ font-size:12px; color:#2b3a55; font-weight:800; }
 
-    /* Chart wrapper */
-    .chart-wrap{
-      width:100%;
-      height:100%;
-      padding:6px 6px 2px;
-    }
+    /* Chart */
+    .chart-wrap{ width:100%; height:100%; padding:6px; position:relative; }
     canvas{ width:100% !important; height:100% !important; }
 
-    /* Status bar */
+    /* Status */
     .status{
-      width:100%;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      padding:6px 8px;
+      width:100%; display:flex; flex-direction:column; gap:10px; padding:6px 8px;
     }
-    .status .score{
-      font-size:38px;
-      font-weight:1000;
-      color:#111827;
-    }
-    .status .desc{
-      font-size:12px;
-      color:var(--muted);
-      font-weight:800;
-      line-height:1.35;
-    }
+    .status .score{ font-size:38px; font-weight:1000; color:#111827; }
+    .status .desc{ font-size:12px; color:var(--muted); font-weight:800; line-height:1.35; }
     .bar{
-      width:100%;
-      height:10px;
-      border-radius:999px;
+      width:100%; height:10px; border-radius:999px;
       background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444);
-      border:1px solid var(--line);
-      position:relative;
+      border:1px solid var(--line); position:relative;
     }
     .bar .pin{
-      height:100%;
-      width:12px;
-      border-radius:999px;
-      background:#111827;
-      position:absolute;
-      top:0;
-      left:0;
+      height:100%; width:12px; border-radius:999px; background:#111827;
+      position:absolute; top:0; left:0;
     }
 
+    /* Resize handle - muy importante el z-index */
     .resize-handle{
       position:absolute;
-      right:8px;
-      bottom:8px;
-      width:12px;
-      height:12px;
-      border-right:3px solid #b8c2d3;
-      border-bottom:3px solid #b8c2d3;
+      right:6px; bottom:6px;
+      width:16px; height:16px;
+      border-right:4px solid #b8c2d3;
+      border-bottom:4px solid #b8c2d3;
       border-radius:2px;
-      opacity:.9;
-      pointer-events:none;
-      z-index:3;
+      cursor:nwse-resize;
+      z-index: 50; 
+      touch-action: none;
     }
+    .resize-handle:hover { border-color: var(--brand); }
 
-    /* Responsive tweaks */
-    @media (max-width: 1200px){
-      :root{ --row: 52px; }
-      .hint{ display:none; }
-    }
-    @media (max-width: 900px){
-      :root{ --row: 56px; --cols: 6; }
-      .select, .input{ min-width:160px; }
-    }
+    @media (max-width: 1200px){ :root{ --row: 52px; } .hint{ display:none; } }
+    @media (max-width: 900px){ :root{ --row: 56px; --cols: 6; } .select, .input{ min-width:160px; } }
   </style>
 </head>
 
 <body>
   <div class="topbar">
-    <div class="title">Monitor en Línea</div>
-    <div class="brand"><div class="mark"></div>grupo saesa</div>
+    <div class="title">Monitor Builder</div>
+    <div class="brand"><div class="mark"></div>saesa</div>
   </div>
 
   <div class="toolbar">
     <button class="btn primary" id="btnAddSection">➕ Sección</button>
 
-    <select class="select" id="sectionSelect" title="Sección activa (acciones globales)"></select>
+    <select class="select" id="sectionSelect"></select>
     <input class="input" id="sectionName" placeholder="Renombrar sección..." />
     <button class="btn" id="btnRenameSection">✏️ Renombrar</button>
     <button class="btn danger" id="btnDeleteSection">🗑️ Borrar sección</button>
 
     <span style="width:18px;"></span>
 
-    <button class="btn" id="btnDuplicate">📄 Duplicar módulo</button>
+    <button class="btn" id="btnDuplicate">📄 Duplicar</button>
     <button class="btn danger" id="btnDeleteModule">🗑️ Borrar módulo</button>
 
-    <button class="btn" id="btnReset">♻️ Reset demo</button>
-    <button class="btn" id="btnExport">⬇️ Export JSON</button>
+    <button class="btn" id="btnReset">♻️ Reset</button>
+    <button class="btn" id="btnExport">⬇️ JSON</button>
     <label class="btn">
-      ⬆️ Import JSON
+      ⬆️ Import
       <input type="file" id="importFile" accept="application/json" style="display:none;">
     </label>
 
     <div class="hint">
-      <div class="chip">Arrastra por el encabezado</div>
-      <div class="chip">Redimensiona desde bordes/esquina</div>
-      <div class="chip">Click para seleccionar</div>
-      <div class="chip">Auto-guardado</div>
+      <div class="chip">Arrastra desde el título</div>
+      <div class="chip">Esquina inf-der para redimensionar</div>
     </div>
   </div>
 
@@ -463,83 +356,50 @@
 <script>
 /* ------------------------------ State ------------------------------ */
 
-const STORAGE_KEY = "saesa_monitor_builder_v3_fixed";
+const STORAGE_KEY = "saesa_monitor_fixed_final";
 let state = { version: 3, sections: [], selected: { sectionId: null, moduleId: null } };
-const charts = new Map(); // moduleId -> Chart instance
-let interactBound = false;
-
+const charts = new Map();
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(2, 6);
 
 function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
 function load(){
   const raw = localStorage.getItem(STORAGE_KEY);
-  if(raw){
-    try { state = JSON.parse(raw); } catch {}
-  }
-  if(!state.sections || state.sections.length === 0){
-    state = demoState();
-    save();
-  }
-  // Validación de seguridad
-  if(!state.selected) state.selected = { sectionId: state.sections[0]?.id ?? null, moduleId: null };
-  if(!state.selected.sectionId && state.sections[0]) state.selected.sectionId = state.sections[0].id;
+  if(raw) { try { state = JSON.parse(raw); } catch {} }
+  if(!state.sections || state.sections.length === 0){ state = demoState(); save(); }
+  if(!state.selected) state.selected = { sectionId: state.sections[0]?.id, moduleId: null };
 }
 
 function demoState(){
   const s1 = { id: uid(), name:"Recursos", modules:[] };
-  const s2 = { id: uid(), name:"Tiempos", modules:[] };
-  const s3 = { id: uid(), name:"Requerimientos", modules:[] };
+  const s2 = { id: uid(), name:"Operaciones", modules:[] };
 
   const mod = (type, title, x, y, w, h, extra={}) => ({
     id: uid(), type, title, x, y, w, h,
     config: { ...defaultConfig(type), ...extra }
   });
 
-  // Sección 1
   s1.modules.push(
-    mod("pie", "Brigadas activas", 1, 1, 3, 6, { data:{ labels:["Jefe de Faena","Jefe Turno","Guardia SAE","Apoyo Contingencia","Otras"], values:[883,313,414,175,92] } }),
-    mod("card","Documentos despachados", 4, 1, 2, 6, { metric:{ value:"180", label:"Documentos despachados", sub:"Hoy" } }),
-    mod("pie", "Disponibilidad de brigadas", 6, 1, 3, 6, { data:{ labels:["En turno","Por terminar turno","En pausa","Fuera de turno"], values:[1712,3074,420,380] } }),
-    mod("card","Productividad (%)", 1, 7, 5, 6, { metric:{ value:"120%", label:"Productividad", sub:"(Ejemplo)" }, bigColor:"#0f9a5f" }),
-    mod("status","Complejidad operacional", 6, 7, 4, 6, { status:{ score:9.5, desc:"(tareas activas + fallas nuevas) / brigadas disponibles\nVerde <4 · Amarillo 4–6 · Rojo >6", pin:0.72 } })
+    mod("pie", "Brigadas activas", 1, 1, 3, 6, { data:{ labels:["Jefe","Turno","Guardia","Apoyo"], values:[80,30,40,15] } }),
+    mod("card","Documentos despachados", 4, 1, 2, 6, { metric:{ value:"180", label:"Despachados", sub:"Hoy" } }),
+    mod("card","Productividad", 6, 1, 3, 6, { metric:{ value:"98%", label:"Global", sub:"Semana" }, bigColor:"#0f9a5f" }),
+    mod("status","Complejidad", 1, 7, 5, 5, { status:{ score:7.2, desc:"Nivel de riesgo operativo alto", pin:0.7 } })
   );
 
-  // Sección 2
   s2.modules.push(
-    mod("card","Tiempo medio de asignación de brigada", 1, 1, 4, 5, { metric:{ value:"01:15:27", label:"Asignación brigada" } }),
-    mod("card","Tiempo de concurrencia a falla", 5, 1, 4, 5, { metric:{ value:"02:47:51", label:"Concurrencia a falla" } }),
-    mod("card","Tiempo medio de espera", 9, 1, 4, 5, { metric:{ value:"03:14:22", label:"Espera" } }),
-    mod("bar","Cantidad de PT por Tipo", 1, 6, 7, 6, { data:{ labels:["Tipo A","Tipo B","Tipo C","Tipo D","Acotadas"], values:[377,24,4,1,3] } }),
-    mod("card","Complejidad PT", 8, 6, 5, 6, { metric:{ value:"ALTO", label:"Complejidad PT", sub:"(Ejemplo)" }, bigColor:"#111827" })
+    mod("bar","Fallas por zona", 1, 1, 6, 6, { data:{ labels:["Norte","Sur","Este","Oeste"], values:[12,45,22,8] } }),
+    mod("card","Tiempo Respuesta", 7, 1, 4, 4, { metric:{ value:"45m", label:"Promedio" } })
   );
 
-  // Sección 3 (Aquí estaba el problema de overlap)
-  s3.modules.push(
-    mod("bar","Concurrencia ante fallas (hoy)", 1, 1, 6, 6, { data:{ labels:["Dentro","Fuera"], values:[94,9] } }),
-    mod("pie","Documentos abiertos", 7, 1, 5, 6, { data:{ labels:["Arribado","Despachado","Asignado","En bandeja"], values:[319,102,260,38] } }),
-    
-    // Tareas del día (Col 1, Y 7)
-    mod("bar","Tareas del día", 1, 7, 7, 6, { data:{ labels:["Ejecutadas","En ejecución","Asignadas"], values:[82,56,125] } }),
-    
-    // Efectividad (Col 8, Y 7)
-    mod("card","Efectividad de despacho", 8, 7, 4, 3, { metric:{ value:"0.89%", label:"Efectividad de despacho" } }),
-    
-    // CORRECCIÓN: Movido a la fila 10 y Columna 8 (o nueva línea) para evitar overlap con "Efectividad"
-    mod("card","Ocupación Brigada", 8, 10, 4, 3, { metric:{ value:"80%", label:"Ocupación Brigada" } })
-  );
-
-  return { version:3, sections:[s1,s2,s3], selected:{ sectionId:s1.id, moduleId:null } };
+  return { version:3, sections:[s1,s2], selected:{ sectionId:s1.id, moduleId:null } };
 }
-
-/* ------------------------- Default Configs ------------------------- */
 
 function defaultConfig(type){
   switch(type){
-    case "card": return { metric:{ value:"0", label:"Título", sub:"" }, bigColor:null };
-    case "pie":  return { data:{ labels:["A","B","C"], values:[10,20,30] }, legend:true };
-    case "bar":  return { data:{ labels:["A","B","C"], values:[10,20,30] }, horizontal:false };
-    case "status": return { status:{ score:5.0, desc:"Descripción…", pin:0.5 } };
+    case "card": return { metric:{ value:"0", label:"Label", sub:"" }, bigColor:null };
+    case "pie":  return { data:{ labels:["A","B","C"], values:[30,50,20] }, legend:true };
+    case "bar":  return { data:{ labels:["A","B","C"], values:[10,40,20] }, horizontal:false };
+    case "status": return { status:{ score:5.0, desc:"Descripción...", pin:0.5 } };
     default: return {};
   }
 }
@@ -551,672 +411,391 @@ const elSectionSelect = document.getElementById("sectionSelect");
 const elSectionName = document.getElementById("sectionName");
 
 function render(){
-  // selector global
+  // 1. Setup Select
   elSectionSelect.innerHTML = "";
   state.sections.forEach(sec=>{
     const opt = document.createElement("option");
-    opt.value = sec.id;
-    opt.textContent = sec.name;
+    opt.value = sec.id; opt.textContent = sec.name;
     elSectionSelect.appendChild(opt);
   });
-  elSectionSelect.value = state.selected.sectionId ?? state.sections[0]?.id ?? "";
+  elSectionSelect.value = state.selected.sectionId ?? "";
 
-  // canvas
+  // 2. Render Canvas
   elCanvas.innerHTML = "";
-
   state.sections.forEach(sec=>{
-    const section = document.createElement("div");
-    section.className = "section";
-    section.dataset.sectionId = sec.id;
-
-    // header con (+) propio
+    const sectionDiv = document.createElement("div");
+    sectionDiv.className = "section";
+    
+    // Header
     const header = document.createElement("div");
     header.className = "section-header";
     header.innerHTML = `
       <div class="section-header-left">
         <h2>${escapeHtml(sec.name)}</h2>
-
         <div class="add-wrap">
-          <button class="btn primary" data-action="toggle-add" data-section="${sec.id}">➕</button>
+          <button class="btn primary" onclick="toggleAddMenu('${sec.id}')">➕</button>
           <div class="add-menu" id="addmenu_${sec.id}">
-            <button class="menu-item" data-add="card" data-section="${sec.id}">📌 Tarjeta <span class="menu-desc">KPI / número</span></button>
-            <button class="menu-item" data-add="pie" data-section="${sec.id}">🥧 Circular <span class="menu-desc">distribución</span></button>
-            <button class="menu-item" data-add="bar" data-section="${sec.id}">📊 Barras <span class="menu-desc">comparación</span></button>
-            <button class="menu-item" data-add="status" data-section="${sec.id}">🟧 Estado <span class="menu-desc">score / regla</span></button>
+            <div class="menu-item" onclick="addModule('card','${sec.id}')">📌 Tarjeta</div>
+            <div class="menu-item" onclick="addModule('pie','${sec.id}')">🥧 Circular</div>
+            <div class="menu-item" onclick="addModule('bar','${sec.id}')">📊 Barras</div>
+            <div class="menu-item" onclick="addModule('status','${sec.id}')">🟧 Estado</div>
           </div>
         </div>
-
-        <button class="btn" data-action="rename-section" data-section="${sec.id}">✏️ Renombrar</button>
-        <button class="btn danger" data-action="delete-section" data-section="${sec.id}">🗑️ Borrar</button>
-      </div>
-
-      <div class="section-actions">
-        <span class="muted">ID:</span>
-        <span class="muted" style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace;">${sec.id}</span>
+        <button class="btn" onclick="renameSection('${sec.id}')">✏️</button>
+        <button class="btn danger" onclick="deleteSection('${sec.id}')">🗑️</button>
       </div>
     `;
-    section.appendChild(header);
+    sectionDiv.appendChild(header);
 
+    // Grid
     const grid = document.createElement("div");
     grid.className = "grid";
-    grid.dataset.sectionId = sec.id;
+    grid.dataset.sectionId = sec.id; // Necesario para calcular posición
 
-    sec.modules.forEach(m=>{
-      const modEl = document.createElement("div");
-      modEl.className = "module";
-      modEl.dataset.moduleId = m.id;
-      modEl.dataset.sectionId = sec.id;
+    sec.modules.forEach(m => {
+      const el = document.createElement("div");
+      el.className = "module";
+      if(state.selected.moduleId === m.id) el.classList.add("selected");
+      
+      el.dataset.mid = m.id;
+      el.dataset.sid = sec.id;
 
-      if(state.selected.moduleId === m.id) modEl.classList.add("selected");
+      // CSS Grid Positioning
+      el.style.gridColumnStart = m.x;
+      el.style.gridColumnEnd = `span ${m.w}`;
+      el.style.gridRowStart = m.y;
+      el.style.gridRowEnd = `span ${m.h}`;
 
-      // placement
-      modEl.style.gridColumn = `${m.x} / span ${m.w}`;
-      modEl.style.gridRow = `${m.y} / span ${m.h}`;
-
-      modEl.innerHTML = `
+      el.innerHTML = `
         <div class="mod-top">
           <div class="mod-title">
             <span class="badge">${m.type.toUpperCase()}</span>
-            <span class="t">${escapeHtml(m.title)}</span>
+            <span>${escapeHtml(m.title)}</span>
           </div>
           <div class="mod-actions">
-            <button class="icon-btn" title="Editar" data-action="edit">✎</button>
-            <button class="icon-btn" title="Borrar" data-action="delete">🗑</button>
+            <button class="icon-btn" onclick="handleEdit(event, '${sec.id}', '${m.id}')">✎</button>
+            <button class="icon-btn" onclick="handleDelete(event, '${sec.id}', '${m.id}')">🗑</button>
           </div>
         </div>
-        <div class="mod-body">${moduleBodyHTML(m)}</div>
+        <div class="mod-body">${getModuleBody(m)}</div>
         <div class="resize-handle"></div>
       `;
 
-      // Selección: Usamos CLICK, no mousedown
-      modEl.addEventListener("click", (e)=>{
-        if(e.target?.closest?.("[data-action]")) return;
-        if(state.selected.moduleId === m.id && state.selected.sectionId === sec.id) return;
-        select(sec.id, m.id);
+      // Selección al hacer click
+      el.addEventListener("mousedown", (e) => {
+        // Evitar seleccionar si clicamos un botón
+        if(e.target.closest("button")) return;
+        if(state.selected.moduleId !== m.id){
+          state.selected.sectionId = sec.id;
+          state.selected.moduleId = m.id;
+          save();
+          // No llamamos render() completo aquí para no cortar animaciones, solo actualizamos clases
+          document.querySelectorAll('.module').forEach(x => x.classList.remove('selected'));
+          el.classList.add('selected');
+        }
       });
 
-      modEl.querySelectorAll("[data-action]").forEach(btn=>{
-        btn.addEventListener("click", (e)=>{
-          e.stopPropagation();
-          const action = e.currentTarget.dataset.action;
-          if(action === "delete") removeModule(sec.id, m.id);
-          if(action === "edit") editModule(sec.id, m.id);
-        });
-      });
+      grid.appendChild(el);
 
-      grid.appendChild(modEl);
+      // ---------------------------------------------------------
+      // MAGIA: Inicializar Interact JS *para cada elemento*
+      // ---------------------------------------------------------
+      makeInteractive(el);
     });
 
-    section.appendChild(grid);
-    elCanvas.appendChild(section);
-
-    // wire section header buttons
-    header.querySelector('[data-action="toggle-add"]').addEventListener("click", (e)=>{
-      e.stopPropagation();
-      const sid = e.currentTarget.dataset.section;
-      toggleAddMenu(sid);
-    });
-
-    header.querySelectorAll("[data-add]").forEach(btn=>{
-      btn.addEventListener("click", (e)=>{
-        e.stopPropagation();
-        const sid = e.currentTarget.dataset.section;
-        const type = e.currentTarget.dataset.add;
-        addModuleToSection(type, sid);
-        closeAllAddMenus();
-      });
-    });
-
-    header.querySelector('[data-action="rename-section"]').addEventListener("click", (e)=>{
-      e.stopPropagation();
-      renameSection(sec.id);
-    });
-    header.querySelector('[data-action="delete-section"]').addEventListener("click", (e)=>{
-      e.stopPropagation();
-      deleteSection(sec.id);
-    });
+    sectionDiv.appendChild(grid);
+    elCanvas.appendChild(sectionDiv);
   });
 
-  setupInteract();
   rebuildCharts();
 }
 
-/* ------------------------------ Menús ------------------------------ */
+/* ------------------------- INTERACT JS LOGIC ----------------------- */
 
-function toggleAddMenu(sectionId){
-  state.sections.forEach(s=>{
-    if(s.id !== sectionId){
-      const el = document.getElementById("addmenu_"+s.id);
-      if(el) el.classList.remove("open");
-    }
-  });
-  const menu = document.getElementById("addmenu_"+sectionId);
-  if(menu) menu.classList.toggle("open");
-}
-
-function closeAllAddMenus(){
-  state.sections.forEach(s=>{
-    const el = document.getElementById("addmenu_"+s.id);
-    if(el) el.classList.remove("open");
-  });
-}
-
-document.addEventListener("click", (e)=>{
-  const isInside = e.target.closest?.(".add-wrap");
-  if(!isInside) closeAllAddMenus();
-});
-
-/* --------------------------- Module bodies -------------------------- */
-
-function moduleBodyHTML(m){
-  if(m.type === "card"){
-    const metric = m.config.metric || {};
-    const bigStyle = m.config.bigColor ? `style="color:${m.config.bigColor};"` : "";
-    return `
-      <div class="metric">
-        <div class="big" ${bigStyle}>${escapeHtml(String(metric.value ?? ""))}</div>
-        <div class="label">${escapeHtml(String(metric.label ?? ""))}</div>
-        ${metric.sub ? `<div class="sub">${escapeHtml(String(metric.sub))}</div>` : ""}
-      </div>
-    `;
-  }
-
-  if(m.type === "status"){
-    const st = m.config.status || {};
-    const pin = clamp01(st.pin ?? 0.5);
-    return `
-      <div class="status">
-        <div class="score">${escapeHtml(String(st.score ?? ""))}</div>
-        <div class="desc">${escapeHtml(String(st.desc ?? "")).replaceAll("\n","<br>")}</div>
-        <div class="bar"><div class="pin" style="transform: translateX(${Math.round(pin*100)}%);"></div></div>
-        <div class="muted">Nivel actual</div>
-      </div>
-    `;
-  }
-
-  return `<div class="chart-wrap"><canvas id="c_${m.id}"></canvas></div>`;
-}
-
-/* ------------------------- Global interactions ---------------------- */
-
-function select(sectionId, moduleId){
-  state.selected.sectionId = sectionId;
-  state.selected.moduleId = moduleId;
-  save();
-  render();
-}
-
-document.getElementById("sectionSelect").addEventListener("change", (e)=>{
-  state.selected.sectionId = e.target.value;
-  state.selected.moduleId = null;
-  save();
-  render();
-});
-
-document.getElementById("btnAddSection").addEventListener("click", ()=>{
-  const name = prompt("Nombre de la nueva sección:", "Nueva sección");
-  if(!name) return;
-  const sec = { id: uid(), name, modules: [] };
-  state.sections.push(sec);
-  state.selected.sectionId = sec.id;
-  state.selected.moduleId = null;
-  save();
-  render();
-});
-
-document.getElementById("btnRenameSection").addEventListener("click", ()=>{
-  const sid = state.selected.sectionId;
-  if(!sid) return;
-  const sec = state.sections.find(s=>s.id===sid);
-  if(!sec) return;
-
-  const newName = (elSectionName.value || "").trim() || prompt("Nuevo nombre:", sec.name);
-  if(!newName) return;
-
-  sec.name = newName;
-  elSectionName.value = "";
-  save();
-  render();
-});
-
-document.getElementById("btnDeleteSection").addEventListener("click", ()=>{
-  const sid = state.selected.sectionId;
-  if(!sid) return;
-  deleteSection(sid);
-});
-
-document.getElementById("btnDeleteModule").addEventListener("click", ()=>{
-  const sid = state.selected.sectionId;
-  const mid = state.selected.moduleId;
-  if(!sid || !mid) return alert("Selecciona un módulo primero.");
-  removeModule(sid, mid);
-});
-
-document.getElementById("btnDuplicate").addEventListener("click", ()=>{
-  const sid = state.selected.sectionId;
-  const mid = state.selected.moduleId;
-  if(!sid || !mid) return alert("Selecciona un módulo primero.");
-
-  const sec = state.sections.find(s=>s.id===sid);
-  const m = sec?.modules.find(x=>x.id===mid);
-  if(!sec || !m) return;
-
-  const copy = structuredClone(m);
-  copy.id = uid();
-  copy.title = m.title + " (copia)";
-  copy.x = clampInt(m.x + 1, 1, colsFromCSS());
-  copy.y = m.y + 1;
-  sec.modules.push(copy);
-
-  state.selected.moduleId = copy.id;
-  save();
-  render();
-});
-
-document.getElementById("btnReset").addEventListener("click", ()=>{
-  const ok = confirm("¿Resetear a la demo inicial? (se perderán cambios)");
-  if(!ok) return;
-  state = demoState();
-  save();
-  render();
-});
-
-document.getElementById("btnExport").addEventListener("click", ()=>{
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "monitor_builder.json";
-  a.click();
-  URL.revokeObjectURL(a.href);
-});
-
-document.getElementById("importFile").addEventListener("change", async (e)=>{
-  const f = e.target.files?.[0];
-  if(!f) return;
-  try{
-    const text = await f.text();
-    const parsed = JSON.parse(text);
-    if(!parsed.sections) throw new Error("JSON inválido (no tiene sections).");
-    state = parsed;
-    if(!state.selected) state.selected = { sectionId: state.sections[0]?.id ?? null, moduleId: null };
-    save();
-    render();
-  }catch(err){
-    alert("No pude importar: " + err.message);
-  }finally{
-    e.target.value = "";
-  }
-});
-
-/* ------------------------------ Section ops ------------------------- */
-
-function renameSection(sectionId){
-  const sec = state.sections.find(s=>s.id===sectionId);
-  if(!sec) return;
-  const newName = prompt("Nuevo nombre de sección:", sec.name);
-  if(!newName) return;
-  sec.name = newName.trim();
-  state.selected.sectionId = sectionId;
-  save();
-  render();
-}
-
-function deleteSection(sectionId){
-  const sec = state.sections.find(s=>s.id===sectionId);
-  if(!sec) return;
-  const ok = confirm(`¿Borrar sección "${sec.name}" y todos sus módulos?`);
-  if(!ok) return;
-
-  sec.modules.forEach(m=>{
-    if(charts.has(m.id)){
-      charts.get(m.id).destroy();
-      charts.delete(m.id);
-    }
-  });
-
-  state.sections = state.sections.filter(s=>s.id!==sectionId);
-  state.selected.sectionId = state.sections[0]?.id ?? null;
-  state.selected.moduleId = null;
-  save();
-  render();
-}
-
-/* ------------------------------ Modules ---------------------------- */
-
-function addModuleToSection(type, sectionId){
-  const sec = state.sections.find(s=>s.id===sectionId);
-  if(!sec) return;
-
-  const y = (sec.modules.reduce((max, m)=> Math.max(max, m.y + m.h), 0) || 1);
-
-  const m = {
-    id: uid(),
-    type,
-    title: titleForType(type),
-    x: 1,
-    y: y,
-    w: (type==="card" ? 4 : 4),
-    h: (type==="card" ? 5 : 7),
-    config: defaultConfig(type)
-  };
-
-  if(type==="card"){
-    m.config.metric.value = "0";
-    m.config.metric.label = "Nueva tarjeta";
-  }
-  if(type==="pie" || type==="bar"){
-    m.config.data = { labels:["A","B","C"], values:[10,20,30] };
-  }
-  if(type==="status"){
-    m.config.status = { score: 5.0, desc:"Reglas/definición…", pin: 0.5 };
-  }
-
-  sec.modules.push(m);
-  state.selected.sectionId = sectionId;
-  state.selected.moduleId = m.id;
-  save();
-  render();
-}
-
-function removeModule(sectionId, moduleId){
-  const sec = state.sections.find(s=>s.id===sectionId);
-  if(!sec) return;
-  const m = sec.modules.find(x=>x.id===moduleId);
-  if(!m) return;
-
-  const ok = confirm(`¿Borrar módulo "${m.title}"?`);
-  if(!ok) return;
-
-  if(charts.has(moduleId)){
-    charts.get(moduleId).destroy();
-    charts.delete(moduleId);
-  }
-
-  sec.modules = sec.modules.filter(x=>x.id!==moduleId);
-  state.selected.moduleId = null;
-  save();
-  render();
-}
-
-function editModule(sectionId, moduleId){
-  const sec = state.sections.find(s=>s.id===sectionId);
-  const m = sec?.modules.find(x=>x.id===moduleId);
-  if(!m) return;
-
-  const title = prompt("Título del módulo:", m.title);
-  if(title !== null && title.trim() !== "") m.title = title.trim();
-
-  if(m.type === "card"){
-    const value = prompt("Valor grande (ej: 180, 120%, 02:47:51):", m.config.metric?.value ?? "");
-    if(value !== null) m.config.metric.value = value;
-
-    const label = prompt("Etiqueta:", m.config.metric?.label ?? "");
-    if(label !== null) m.config.metric.label = label;
-
-    const sub = prompt("Subtexto (opcional):", m.config.metric?.sub ?? "");
-    if(sub !== null) m.config.metric.sub = sub;
-
-    const color = prompt("Color del valor (hex o vacío):", m.config.bigColor ?? "");
-    if(color !== null) m.config.bigColor = color.trim() || null;
-  }
-
-  if(m.type === "pie" || m.type === "bar"){
-    const labels = prompt("Labels separados por coma:", (m.config.data?.labels ?? []).join(","));
-    if(labels !== null) m.config.data.labels = labels.split(",").map(s=>s.trim()).filter(Boolean);
-
-    const values = prompt("Valores separados por coma:", (m.config.data?.values ?? []).join(","));
-    if(values !== null){
-      const nums = values.split(",").map(s=>Number(String(s).trim()));
-      m.config.data.values = nums.map(n => Number.isFinite(n) ? n : 0);
-    }
-
-    if(m.type === "bar"){
-      const horiz = confirm("¿Barras horizontales? (Aceptar = sí, Cancelar = no)");
-      m.config.horizontal = horiz;
-    }
-  }
-
-  if(m.type === "status"){
-    const score = prompt("Score (número):", String(m.config.status?.score ?? 5));
-    if(score !== null){
-      const n = Number(score);
-      if(Number.isFinite(n)) m.config.status.score = n;
-    }
-    const desc = prompt("Descripción (usa \\n para saltos):", String(m.config.status?.desc ?? ""));
-    if(desc !== null) m.config.status.desc = desc.replaceAll("\\n", "\n");
-
-    const pin = prompt("Pin 0..1 (ej: 0.72):", String(m.config.status?.pin ?? 0.5));
-    if(pin !== null){
-      const p = Number(pin);
-      if(Number.isFinite(p)) m.config.status.pin = clamp01(p);
-    }
-  }
-
-  save();
-  render();
-}
-
-function titleForType(type){
-  if(type==="card") return "Tarjeta";
-  if(type==="pie") return "Gráfico circular";
-  if(type==="bar") return "Gráfico de barras";
-  if(type==="status") return "Estado / Nivel";
-  return "Módulo";
-}
-
-/* ---------------------------- Drag/Resize -------------------------- */
-
-function setupInteract(){
-  if(interactBound) return;
-  interactBound = true;
-
-  interact(".module")
+function makeInteractive(element) {
+  interact(element)
     .draggable({
-      allowFrom: ".mod-top",
+      // Solo arrastrar desde el encabezado (.mod-top)
+      allowFrom: '.mod-top',
+      // IMPORTANTE: Ignorar los botones dentro del header para que no inicien arrastre
+      ignoreFrom: 'button', 
+      
       inertia: true,
       modifiers: [
         interact.modifiers.restrictRect({
-          restriction: (el) => el.closest(".grid"),
+          restriction: 'parent', // Restringir al grid
           endOnly: true
         })
       ],
+      autoScroll: true, // Permitir scroll si arrastramos al borde
+
       listeners: {
-        start(event){
-          event.target.classList.add("is-dragging");
+        start(event) {
+          event.target.classList.add('is-dragging');
         },
-        move(event){
+        move(event) {
           const target = event.target;
-          const x = (parseFloat(target.getAttribute("data-tx")) || 0) + event.dx;
-          const y = (parseFloat(target.getAttribute("data-ty")) || 0) + event.dy;
+          // Guardamos posición temporal en data attributes
+          const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+          const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+          // Aplicar transformación visual
           target.style.transform = `translate(${x}px, ${y}px)`;
-          target.setAttribute("data-tx", x);
-          target.setAttribute("data-ty", y);
+          target.setAttribute('data-x', x);
+          target.setAttribute('data-y', y);
         },
-        end(event){
-          event.target.classList.remove("is-dragging");
-          commitTransformToGrid(event.target, false);
+        end(event) {
+          event.target.classList.remove('is-dragging');
+          // Calcular dónde cayó en la grilla
+          snapToGrid(event.target);
         }
       }
     })
     .resizable({
-      edges: { left:true, right:true, bottom:true, top:true },
-      inertia: true,
+      // Habilitar resize
+      edges: { left: false, right: '.resize-handle', bottom: '.resize-handle', top: false },
+      
       modifiers: [
-        interact.modifiers.restrictEdges({
-          outer: (el) => el.closest(".grid")
-        }),
+        // Tamaño mínimo
         interact.modifiers.restrictSize({
-          min: { width: 140, height: 140 }
+          min: { width: 140, height: 100 }
+        }),
+        interact.modifiers.restrictEdges({
+          outer: 'parent'
         })
       ],
+
       listeners: {
-        start(event){
-          event.target.classList.add("is-dragging");
+        start(event) {
+            event.target.classList.add('is-resizing');
         },
-        move(event){
+        move(event) {
           const target = event.target;
-          let x = (parseFloat(target.getAttribute("data-tx")) || 0);
-          let y = (parseFloat(target.getAttribute("data-ty")) || 0);
+          let x = (parseFloat(target.getAttribute('data-x')) || 0);
+          let y = (parseFloat(target.getAttribute('data-y')) || 0);
 
-          target.style.width  = event.rect.width + "px";
-          target.style.height = event.rect.height + "px";
+          // Actualizar tamaño visualmente
+          target.style.width = event.rect.width + 'px';
+          target.style.height = event.rect.height + 'px';
 
+          // Si redimensionamos a la izquierda (no habilitado aquí pero por seguridad)
           x += event.deltaRect.left;
           y += event.deltaRect.top;
 
           target.style.transform = `translate(${x}px, ${y}px)`;
-          target.setAttribute("data-tx", x);
-          target.setAttribute("data-ty", y);
+          target.setAttribute('data-x', x);
+          target.setAttribute('data-y', y);
         },
-        end(event){
-          event.target.classList.remove("is-dragging");
-          commitTransformToGrid(event.target, true);
+        end(event) {
+            event.target.classList.remove('is-resizing');
+            snapToGrid(event.target, true);
         }
       }
     });
 }
 
-function commitTransformToGrid(moduleEl, includeResize=false){
-  const sectionId = moduleEl.dataset.sectionId;
-  const moduleId  = moduleEl.dataset.moduleId;
-  const sec = state.sections.find(s=>s.id===sectionId);
-  const m = sec?.modules.find(x=>x.id===moduleId);
-  if(!m) return;
+// Función que traduce pixeles a columnas/filas de CSS Grid
+function snapToGrid(element, isResize = false) {
+    const mid = element.dataset.mid;
+    const sid = element.dataset.sid;
+    const sec = state.sections.find(s => s.id === sid);
+    const mod = sec.modules.find(m => m.id === mid);
+    
+    if(!mod) return;
 
-  const gridEl = moduleEl.closest(".grid");
-  if(!gridEl) return;
+    // Obtener métricas de la grilla
+    const gridEl = element.parentElement;
+    const gridRect = gridEl.getBoundingClientRect();
+    const elRect = element.getBoundingClientRect();
+    
+    // Variables CSS
+    const style = getComputedStyle(document.documentElement);
+    const cols = parseInt(style.getPropertyValue('--cols')) || 12;
+    const gap = parseInt(style.getPropertyValue('--gap').replace('px','')) || 12;
+    const rowH = parseInt(style.getPropertyValue('--row').replace('px','')) || 48;
+    const padding = 12; // gridPad
 
-  const gridRect = gridEl.getBoundingClientRect();
-  const modRect = moduleEl.getBoundingClientRect();
+    // Ancho útil de una columna
+    const totalGap = (cols - 1) * gap;
+    const usableWidth = gridRect.width - (padding * 2) - totalGap;
+    const colWidth = usableWidth / cols;
 
-  const rootStyle = getComputedStyle(document.documentElement);
-  const gap  = parsePx(rootStyle.getPropertyValue("--gap"));
-  const pad  = parsePx(rootStyle.getPropertyValue("--gridPad"));
-  const rowH = parsePx(rootStyle.getPropertyValue("--row"));
-  const cols = colsFromCSS();
+    // Calcular Posición (X, Y)
+    // Distancia desde el inicio del grid (quitando padding)
+    const relativeX = elRect.left - gridRect.left - padding;
+    const relativeY = elRect.top - gridRect.top - padding;
 
-  const usableW = gridRect.width - (pad*2);
-  const colW = (usableW - (gap * (cols - 1))) / cols;
+    // Traducir a indices (base 1)
+    let colIndex = Math.round(relativeX / (colWidth + gap)) + 1;
+    let rowIndex = Math.round(relativeY / (rowH + gap)) + 1;
 
-  const stepX = colW + gap;
-  const stepY = rowH + gap;
+    // Validar límites
+    colIndex = Math.max(1, Math.min(colIndex, cols));
+    rowIndex = Math.max(1, rowIndex);
 
-  const left = (modRect.left - gridRect.left) - pad;
-  const top  = (modRect.top  - gridRect.top)  - pad;
+    mod.x = colIndex;
+    mod.y = rowIndex;
 
-  let newX = clampInt(Math.round(left / stepX) + 1, 1, cols);
-  let newY = Math.max(1, Math.round(top / stepY) + 1);
+    // Calcular Dimensiones (W, H)
+    if(isResize) {
+        // Ancho en columas
+        let wSpan = Math.round(elRect.width / (colWidth + gap));
+        let hSpan = Math.round(elRect.height / (rowH + gap));
+        
+        mod.w = Math.max(1, Math.min(wSpan, cols - mod.x + 1));
+        mod.h = Math.max(1, hSpan);
+    } else {
+        // Si solo movemos, asegurar que no se salga a la derecha
+        if(mod.x + mod.w - 1 > cols) {
+            mod.x = cols - mod.w + 1;
+        }
+    }
 
-  m.x = newX;
-  m.y = newY;
+    // Limpiar estilos inline sucios de interact.js
+    element.style.transform = '';
+    element.removeAttribute('data-x');
+    element.removeAttribute('data-y');
+    element.style.width = '';
+    element.style.height = '';
 
-  if(includeResize){
-    let w = Math.max(1, Math.round(modRect.width / stepX));
-    let h = Math.max(1, Math.round(modRect.height / stepY));
-    m.w = clampInt(w, 1, cols);
-    m.h = Math.max(1, h);
-  }
-
-  // Mantener dentro del ancho
-  if(m.x + m.w - 1 > cols){
-    m.x = Math.max(1, cols - m.w + 1);
-  }
-
-  // reset temp transforms
-  moduleEl.style.transform = "";
-  moduleEl.removeAttribute("data-tx");
-  moduleEl.removeAttribute("data-ty");
-  moduleEl.style.width = "";
-  moduleEl.style.height = "";
-
-  save();
-  render();
+    // Guardar y renderizar para "bloquear" en la grilla
+    save();
+    render(); 
 }
 
-/* ------------------------------ Charts ----------------------------- */
+
+/* ----------------------- Module Helpers --------------------------- */
+
+function getModuleBody(m){
+  if(m.type === "card"){
+    const metric = m.config.metric;
+    return `
+      <div class="metric">
+        <div class="big" style="color:${m.config.bigColor||''};">${escapeHtml(metric.value)}</div>
+        <div class="label">${escapeHtml(metric.label)}</div>
+        <div class="sub">${escapeHtml(metric.sub)}</div>
+      </div>
+    `;
+  }
+  if(m.type === "status"){
+    const st = m.config.status;
+    const p = Math.min(1, Math.max(0, st.pin));
+    return `
+      <div class="status">
+        <div class="score">${st.score}</div>
+        <div class="desc">${escapeHtml(st.desc)}</div>
+        <div class="bar"><div class="pin" style="left:${p*100}%"></div></div>
+      </div>
+    `;
+  }
+  return `<div class="chart-wrap"><canvas id="c_${m.id}"></canvas></div>`;
+}
+
+function handleEdit(e, sid, mid){
+  e.stopPropagation(); // Stop click bubbling
+  const sec = state.sections.find(s=>s.id===sid);
+  const m = sec.modules.find(x=>x.id===mid);
+  
+  const title = prompt("Título:", m.title);
+  if(title) m.title = title;
+
+  // Lógica simplificada de edición
+  if(m.type==="card"){
+    const v = prompt("Valor:", m.config.metric.value);
+    if(v) m.config.metric.value = v;
+  }
+  save(); render();
+}
+
+function handleDelete(e, sid, mid){
+  e.stopPropagation();
+  if(!confirm("¿Borrar?")) return;
+  const sec = state.sections.find(s=>s.id===sid);
+  sec.modules = sec.modules.filter(x=>x.id!==mid);
+  if(charts.has(mid)) { charts.get(mid).destroy(); charts.delete(mid); }
+  save(); render();
+}
+
+/* ------------------------- Charts & Utils ------------------------ */
 
 function rebuildCharts(){
-  const allModuleIds = new Set();
-  state.sections.forEach(s=>s.modules.forEach(m=>allModuleIds.add(m.id)));
-
-  for(const [mid, chart] of charts.entries()){
-    if(!allModuleIds.has(mid)){
-      chart.destroy();
-      charts.delete(mid);
-    }
+  // Limpiar charts viejos
+  const currentIds = [];
+  state.sections.forEach(s=>s.modules.forEach(m=>currentIds.push(m.id)));
+  
+  for(const [id, chart] of charts.entries()){
+    if(!currentIds.includes(id)) { chart.destroy(); charts.delete(id); }
   }
 
+  // Crear nuevos
   state.sections.forEach(sec=>{
     sec.modules.forEach(m=>{
-      if(m.type !== "pie" && m.type !== "bar") return;
-      const canvas = document.getElementById(`c_${m.id}`);
-      if(!canvas) return;
+      if(m.type!=="pie" && m.type!=="bar") return;
+      const ctx = document.getElementById(`c_${m.id}`);
+      if(!ctx) return;
+      
+      if(charts.has(m.id)){ charts.get(m.id).destroy(); }
 
-      if(charts.has(m.id)){
-        charts.get(m.id).destroy();
-        charts.delete(m.id);
-      }
+      const cfg = {
+        type: m.type,
+        data: {
+          labels: m.config.data.labels,
+          datasets:[{ data: m.config.data.values, backgroundColor:['#4b2fbf','#7c5cff','#eef2ff','#1a2433'] }]
+        },
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ display: m.type==="pie", position:'bottom' } }
+        }
+      };
+      if(m.type==="bar") cfg.options.indexAxis = m.config.horizontal?'y':'x';
 
-      const labels = m.config.data?.labels ?? [];
-      const values = m.config.data?.values ?? [];
-
-      const cfg = (m.type === "pie")
-        ? {
-            type: "pie",
-            data: { labels, datasets:[{ data: values }] },
-            options: {
-              responsive:true,
-              maintainAspectRatio:false,
-              plugins:{
-                legend:{ display: !!m.config.legend, position:"bottom", labels:{ boxWidth:12 } },
-              }
-            }
-          }
-        : {
-            type: "bar",
-            data: { labels, datasets:[{ data: values }] },
-            options: {
-              responsive:true,
-              maintainAspectRatio:false,
-              indexAxis: m.config.horizontal ? "y" : "x",
-              plugins:{ legend:{ display:false } },
-              scales:{
-                x:{ grid:{ color:"rgba(0,0,0,.06)" } },
-                y:{ grid:{ color:"rgba(0,0,0,.06)" }, beginAtZero:true }
-              }
-            }
-          };
-
-      charts.set(m.id, new Chart(canvas.getContext("2d"), cfg));
+      charts.set(m.id, new Chart(ctx, cfg));
     });
   });
 }
 
-/* ------------------------------ Utils ------------------------------ */
+/* ----------------------- Global Actions -------------------------- */
 
-function escapeHtml(str){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-function clamp01(x){ return Math.max(0, Math.min(1, x)); }
-function clampInt(x,a,b){ return Math.max(a, Math.min(b, x)); }
-function parsePx(v){
-  const n = Number(String(v).replace("px","").trim());
-  return Number.isFinite(n) ? n : 0;
-}
-function colsFromCSS(){
-  const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--cols")) || 12;
-  return cols;
+function escapeHtml(text) {
+  if(!text) return "";
+  return text.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-/* ------------------------------ Boot ------------------------------- */
+/* Menus */
+window.toggleAddMenu = (sid) => {
+  document.querySelectorAll('.add-menu').forEach(e=>e.classList.remove('open'));
+  document.getElementById(`addmenu_${sid}`).classList.add('open');
+};
+window.addModule = (type, sid) => {
+  const sec = state.sections.find(s=>s.id===sid);
+  // Buscar primera fila libre simple
+  let maxY = 0; sec.modules.forEach(m=> maxY = Math.max(maxY, m.y+m.h));
+  
+  sec.modules.push({
+    id: uid(), type, title: type.toUpperCase(),
+    x: 1, y: maxY?maxY:1, w: 4, h: 5,
+    config: defaultConfig(type)
+  });
+  save(); render();
+};
+window.renameSection = (sid) => {
+  const s = state.sections.find(x=>x.id===sid);
+  const n = prompt("Nombre:", s.name);
+  if(n) { s.name=n; save(); render(); }
+};
+window.deleteSection = (sid) => {
+  if(!confirm("¿Borrar sección?")) return;
+  state.sections = state.sections.filter(x=>x.id!==sid);
+  save(); render();
+};
+document.onclick = (e) => {
+  if(!e.target.closest('.add-wrap')) document.querySelectorAll('.add-menu').forEach(x=>x.classList.remove('open'));
+};
 
+/* Start */
 load();
 render();
+
 </script>
 </body>
 </html>
