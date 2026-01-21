@@ -225,7 +225,6 @@
       border-radius: var(--radius);
       overflow:hidden;
 
-      /* Important: 12 columnas fluidas */
       grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
       grid-auto-rows: var(--row);
     }
@@ -239,11 +238,17 @@
       box-shadow: var(--shadow);
       overflow:hidden;
       user-select:none;
-      min-width: 220px; /* para que no se vea ridículo al achicar */
+
+      /* IMPORTANT: allow smaller modules + avoid resize weirdness */
+      min-width: 140px;
+
+      /* z-index fix (drag/resize selection) */
+      z-index: 1;
     }
     .module.selected{
       outline:3px solid rgba(75,47,191,.25);
       border-color: rgba(75,47,191,.45);
+      z-index: 5;
     }
 
     .module .mod-top{
@@ -254,6 +259,9 @@
       border-bottom:1px solid var(--line);
       background:linear-gradient(180deg, #ffffff, #fbfcff);
       cursor:move;
+
+      position:relative;
+      z-index: 2;
     }
     .module .mod-title{
       font-size:13px;
@@ -363,12 +371,16 @@
       border-radius:999px;
       background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444);
       border:1px solid var(--line);
+      position:relative;
     }
     .bar .pin{
       height:100%;
       width:12px;
       border-radius:999px;
       background:#111827;
+      position:absolute;
+      top:0;
+      left:0;
     }
 
     .resize-handle{
@@ -382,6 +394,7 @@
       border-radius:2px;
       opacity:.9;
       pointer-events:none;
+      z-index:3;
     }
 
     /* Responsive tweaks */
@@ -402,11 +415,11 @@
     <div class="brand"><div class="mark"></div>grupo saesa</div>
   </div>
 
-  <!-- Toolbar global (sigue existiendo, pero ahora es opcional) -->
+  <!-- Toolbar global -->
   <div class="toolbar">
     <button class="btn primary" id="btnAddSection">➕ Sección</button>
 
-    <select class="select" id="sectionSelect" title="Sección activa (para acciones globales)"></select>
+    <select class="select" id="sectionSelect" title="Sección activa (acciones globales)"></select>
     <input class="input" id="sectionName" placeholder="Renombrar sección..." />
     <button class="btn" id="btnRenameSection">✏️ Renombrar</button>
     <button class="btn danger" id="btnDeleteSection">🗑️ Borrar sección</button>
@@ -966,6 +979,11 @@ function titleForType(type){
 }
 
 /* ---------------------------- Drag/Resize -------------------------- */
+/* FIX INTEGRATED:
+   - restrict to closest .grid (not generic parent)
+   - size minimum more permissive
+   - z-index handled in CSS above
+*/
 
 function setupInteract(){
   if(interactBound) return;
@@ -975,7 +993,12 @@ function setupInteract(){
     .draggable({
       allowFrom: ".mod-top",
       inertia: true,
-      modifiers: [ interact.modifiers.restrictRect({ restriction:"parent", endOnly:true }) ],
+      modifiers: [
+        interact.modifiers.restrictRect({
+          restriction: (el) => el.closest(".grid"),
+          endOnly: true
+        })
+      ],
       listeners: {
         move(event){
           const target = event.target;
@@ -985,15 +1008,21 @@ function setupInteract(){
           target.setAttribute("data-tx", x);
           target.setAttribute("data-ty", y);
         },
-        end(event){ commitTransformToGrid(event.target); }
+        end(event){
+          commitTransformToGrid(event.target);
+        }
       }
     })
     .resizable({
       edges: { left:true, right:true, bottom:true, top:true },
       inertia: true,
       modifiers: [
-        interact.modifiers.restrictEdges({ outer:"parent" }),
-        interact.modifiers.restrictSize({ min:{ width:220, height:140 } })
+        interact.modifiers.restrictEdges({
+          outer: (el) => el.closest(".grid")
+        }),
+        interact.modifiers.restrictSize({
+          min: { width: 140, height: 140 }
+        })
       ],
       listeners: {
         move(event){
@@ -1011,7 +1040,9 @@ function setupInteract(){
           target.setAttribute("data-tx", x);
           target.setAttribute("data-ty", y);
         },
-        end(event){ commitTransformToGrid(event.target, true); }
+        end(event){
+          commitTransformToGrid(event.target, true);
+        }
       }
     });
 }
@@ -1034,7 +1065,6 @@ function commitTransformToGrid(moduleEl, includeResize=false){
   const pad = parsePx(getComputedStyle(document.documentElement).getPropertyValue("--gridPad"));
   const rowH = parsePx(getComputedStyle(document.documentElement).getPropertyValue("--row"));
 
-  // column width is computed from grid width
   const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--cols")) || 12;
   const usableW = gridRect.width - (pad*2);
   const colW = (usableW - (gap * (cols - 1))) / cols;
@@ -1042,17 +1072,22 @@ function commitTransformToGrid(moduleEl, includeResize=false){
   const stepX = colW + gap;
   const stepY = rowH + gap;
 
-  const newX = clampInt(Math.round((left - pad) / stepX) + 1, 1, cols);
-  const newY = Math.max(1, Math.round((top - pad) / stepY) + 1);
+  let newX = clampInt(Math.round((left - pad) / stepX) + 1, 1, cols);
+  let newY = Math.max(1, Math.round((top - pad) / stepY) + 1);
 
   m.x = newX;
   m.y = newY;
 
   if(includeResize){
-    const w = Math.max(1, Math.round(modRect.width / stepX));
-    const h = Math.max(1, Math.round(modRect.height / stepY));
+    let w = Math.max(1, Math.round(modRect.width / stepX));
+    let h = Math.max(1, Math.round(modRect.height / stepY));
     m.w = clampInt(w, 1, cols);
     m.h = Math.max(1, h);
+  }
+
+  /* Extra safety: keep module fully inside grid columns */
+  if(m.x + m.w - 1 > cols){
+    m.x = Math.max(1, cols - m.w + 1);
   }
 
   // reset temp transforms
@@ -1149,3 +1184,4 @@ render();
 </script>
 </body>
 </html>
+
