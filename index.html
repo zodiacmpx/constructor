@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Monitor en Línea — Builder (Fix definitivo)</title>
+  <title>Monitor en Línea — Builder (Fix definitivo v5)</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
@@ -96,6 +96,7 @@
       border-color:transparent;
     }
     .btn:active{ transform:translateY(1px); }
+
     .select, .input{
       border:1px solid var(--line);
       background:var(--panel);
@@ -106,6 +107,7 @@
       outline:none;
       min-width:220px;
     }
+
     .hint{
       color:var(--muted);
       font-size:12px;
@@ -124,11 +126,7 @@
 
     .canvas{ padding:0 22px 28px; }
 
-    .section{
-      background:transparent;
-      margin:14px 0 18px;
-    }
-
+    .section{ margin:14px 0 18px; }
     .section-header{
       display:flex;
       align-items:center;
@@ -136,14 +134,12 @@
       margin:10px 0;
       gap:10px;
     }
-
     .section-header-left{
       display:flex;
       align-items:center;
       gap:10px;
       flex-wrap:wrap;
     }
-
     .section-header h2{
       margin:0;
       font-size:14px;
@@ -151,7 +147,6 @@
       letter-spacing:.9px;
       color:#3b4a63;
     }
-
     .section-actions{
       display:flex;
       gap:8px;
@@ -159,7 +154,6 @@
       align-items:center;
       justify-content:flex-end;
     }
-
     .muted{ color:var(--muted); font-weight:700; }
 
     .add-wrap{ position:relative; display:inline-block; }
@@ -201,20 +195,19 @@
       margin-left:10px;
     }
 
-    /* GRID AHORA ES CONTENEDOR ABSOLUTO */
+    /* GRID: contenedor relativo para módulos absolutos */
     .grid{
       position:relative;
       width:100%;
-      height: auto;
-      min-height: calc(var(--row) * 8);
       padding: var(--gridPad);
       background:rgba(255,255,255,.35);
       border:1px solid var(--line);
       border-radius: var(--radius);
       overflow:hidden;
+      min-height: calc(var(--row) * 8);
     }
 
-    /* MÓDULO: ABSOLUTO (FIX REAL) */
+    /* MODULE: absoluto */
     .module{
       position:absolute;
       background:var(--panel);
@@ -239,7 +232,6 @@
       opacity: 0.96;
       box-shadow: 0 12px 30px rgba(75, 47, 191, .2);
     }
-
     .module.selected{
       outline:3px solid rgba(75,47,191,.25);
       border-color: rgba(75,47,191,.45);
@@ -257,10 +249,11 @@
       padding:10px 12px;
       border-bottom:1px solid var(--line);
       background:linear-gradient(180deg, #ffffff, #fbfcff);
-      cursor:move;
+      cursor:grab;
       position:relative;
       z-index: 2;
     }
+
     .module .mod-title{
       font-size:13px;
       font-weight:900;
@@ -335,11 +328,7 @@
       font-weight:800;
     }
 
-    .chart-wrap{
-      width:100%;
-      height:100%;
-      padding:6px 6px 2px;
-    }
+    .chart-wrap{ width:100%; height:100%; padding:6px 6px 2px; }
     canvas{ width:100% !important; height:100% !important; }
 
     .status{
@@ -433,8 +422,8 @@
 
     <div class="hint">
       <div class="chip">Desbloquea 🔓 para mover/redimensionar</div>
-      <div class="chip">Arrastra por el encabezado o cuerpo</div>
-      <div class="chip">Redimensiona desde bordes/esquina</div>
+      <div class="chip">Arrastra desde cualquier parte (no botones)</div>
+      <div class="chip">Redimensiona desde bordes o esquina</div>
     </div>
   </div>
 
@@ -443,12 +432,11 @@
 <script>
 /* ------------------------------ State ------------------------------ */
 
-const STORAGE_KEY = "saesa_monitor_builder_v4_absolute";
-let state = { version: 4, sections: [], selected: { sectionId: null, moduleId: null } };
-const charts = new Map(); // moduleId -> Chart instance
+const STORAGE_KEY = "saesa_monitor_builder_v4_absolute"; // puedes cambiarla si quieres reset total
+let state = { version: 5, sections: [], selected: { sectionId: null, moduleId: null } };
+const charts = new Map();
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(2, 6);
-
 function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
 function load(){
@@ -504,10 +492,8 @@ function demoState(){
     mod("card","Ocupación Brigada", 8, 10, 4, 3, { metric:{ value:"80%", label:"Ocupación Brigada" } })
   );
 
-  return { version:4, sections:[s1,s2,s3], selected:{ sectionId:s1.id, moduleId:null } };
+  return { version:5, sections:[s1,s2,s3], selected:{ sectionId:s1.id, moduleId:null } };
 }
-
-/* ------------------------- Default Configs ------------------------- */
 
 function defaultConfig(type){
   switch(type){
@@ -525,6 +511,8 @@ const elCanvas = document.getElementById("canvas");
 const elSectionSelect = document.getElementById("sectionSelect");
 const elSectionName = document.getElementById("sectionName");
 
+let rafToken = 0;
+
 function render(){
   // selector global
   elSectionSelect.innerHTML = "";
@@ -538,6 +526,9 @@ function render(){
 
   // canvas
   elCanvas.innerHTML = "";
+
+  // vamos a colocar módulos DESPUÉS de montar el DOM
+  const placements = [];
 
   state.sections.forEach(sec=>{
     const section = document.createElement("div");
@@ -563,7 +554,6 @@ function render(){
         <button class="btn" data-action="rename-section" data-section="${sec.id}">✏️ Renombrar</button>
         <button class="btn danger" data-action="delete-section" data-section="${sec.id}">🗑️ Borrar</button>
       </div>
-
       <div class="section-actions">
         <span class="muted">ID:</span>
         <span class="muted" style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace;">${sec.id}</span>
@@ -574,6 +564,9 @@ function render(){
     const grid = document.createElement("div");
     grid.className = "grid";
     grid.dataset.sectionId = sec.id;
+    section.appendChild(grid);
+
+    elCanvas.appendChild(section);
 
     sec.modules.forEach(m=>{
       const modEl = document.createElement("div");
@@ -620,15 +613,10 @@ function render(){
       });
 
       grid.appendChild(modEl);
-
-      // IMPORTANT: colocar el módulo en pixeles (grid lógico -> px)
-      placeModuleInPixels(grid, modEl, m);
+      placements.push({ grid, modEl, m });
     });
 
-    section.appendChild(grid);
-    elCanvas.appendChild(section);
-
-    // header actions
+    // section header buttons
     header.querySelector('[data-action="toggle-add"]').addEventListener("click", (e)=>{
       e.stopPropagation();
       toggleAddMenu(e.currentTarget.dataset.section);
@@ -652,10 +640,20 @@ function render(){
     });
   });
 
-  // BIND interact SIEMPRE después de render (sin "interactBound" que te rompe el DOM dinámico)
-  setupInteract();
-  rebuildCharts();
-  adjustAllGridHeights();
+  // 1) Cancelar RAF anterior si hay spam de renders
+  if(rafToken) cancelAnimationFrame(rafToken);
+
+  // 2) Esperar al próximo frame (grid ya tiene ancho real) -> colocar módulos
+  rafToken = requestAnimationFrame(()=>{
+    placements.forEach(p => placeModuleInPixels(p.grid, p.modEl, p.m));
+    adjustAllGridHeights();
+
+    // IMPORTANT: bind interact después de que todo está posicionado
+    setupInteract();
+
+    // charts después (tamaño correcto)
+    rebuildCharts();
+  });
 }
 
 /* ------------------------------ Menús ------------------------------ */
@@ -670,14 +668,12 @@ function toggleAddMenu(sectionId){
   const menu = document.getElementById("addmenu_"+sectionId);
   if(menu) menu.classList.toggle("open");
 }
-
 function closeAllAddMenus(){
   state.sections.forEach(s=>{
     const el = document.getElementById("addmenu_"+s.id);
     if(el) el.classList.remove("open");
   });
 }
-
 document.addEventListener("click", (e)=>{
   const isInside = e.target.closest?.(".add-wrap");
   if(!isInside) closeAllAddMenus();
@@ -697,7 +693,6 @@ function moduleBodyHTML(m){
       </div>
     `;
   }
-
   if(m.type === "status"){
     const st = m.config.status || {};
     const pin = clamp01(st.pin ?? 0.5);
@@ -710,7 +705,6 @@ function moduleBodyHTML(m){
       </div>
     `;
   }
-
   return `<div class="chart-wrap"><canvas id="c_${m.id}"></canvas></div>`;
 }
 
@@ -1010,21 +1004,27 @@ function getGridMetrics(gridEl){
 }
 
 function placeModuleInPixels(gridEl, moduleEl, m){
-  const { pad, colW, rowH, stepX, stepY } = getGridMetrics(gridEl);
+  const { gap, pad, colW, rowH, stepX, stepY } = getGridMetrics(gridEl);
+
+  // Seguridad contra widths raros (por si grid está oculto)
+  if(!Number.isFinite(colW) || colW <= 1){
+    moduleEl.style.left = pad + "px";
+    moduleEl.style.top  = pad + ((m.y-1) * (rowH + gap)) + "px";
+    moduleEl.style.width = "320px";
+    moduleEl.style.height = "280px";
+    return;
+  }
 
   const left = pad + (m.x - 1) * stepX;
   const top  = pad + (m.y - 1) * stepY;
-  const width  = (m.w * colW) + ((m.w - 1) * (stepX - colW)); // w*colW + gaps
-  const height = (m.h * rowH) + ((m.h - 1) * (stepY - rowH));
+
+  const width  = (m.w * colW) + ((m.w - 1) * gap);
+  const height = (m.h * rowH) + ((m.h - 1) * gap);
 
   moduleEl.style.left = left + "px";
-  moduleEl.style.top = top + "px";
-  moduleEl.style.width = width + "px";
+  moduleEl.style.top  = top  + "px";
+  moduleEl.style.width  = width  + "px";
   moduleEl.style.height = height + "px";
-
-  moduleEl.style.transform = ""; // importante: no usamos translate para layout base
-  moduleEl.removeAttribute("data-tx");
-  moduleEl.removeAttribute("data-ty");
 }
 
 function snapPixelsToGrid(gridEl, moduleEl, includeResize){
@@ -1034,10 +1034,10 @@ function snapPixelsToGrid(gridEl, moduleEl, includeResize){
   const m = sec?.modules.find(x=>x.id===moduleId);
   if(!m) return;
 
-  const { pad, cols, stepX, stepY, colW, rowH, gap } = getGridMetrics(gridEl);
+  const { pad, cols, stepX, stepY, gap } = getGridMetrics(gridEl);
 
-  const left = parsePx(moduleEl.style.left) - pad;
-  const top  = parsePx(moduleEl.style.top) - pad;
+  const left = (parsePx(moduleEl.style.left) - pad);
+  const top  = (parsePx(moduleEl.style.top)  - pad);
 
   let newX = clampInt(Math.round(left / stepX) + 1, 1, cols);
   let newY = Math.max(1, Math.round(top / stepY) + 1);
@@ -1049,7 +1049,6 @@ function snapPixelsToGrid(gridEl, moduleEl, includeResize){
     const wPx = parsePx(moduleEl.style.width);
     const hPx = parsePx(moduleEl.style.height);
 
-    // número de columnas/filas aproximando por step
     let w = Math.max(1, Math.round((wPx + gap) / stepX));
     let h = Math.max(1, Math.round((hPx + gap) / stepY));
 
@@ -1060,24 +1059,22 @@ function snapPixelsToGrid(gridEl, moduleEl, includeResize){
   if(m.x + m.w - 1 > cols){
     m.x = Math.max(1, cols - m.w + 1);
   }
-
-  save();
 }
 
 /* ---------------------------- Drag/Resize -------------------------- */
 
 function setupInteract(){
-  // Reset bindings to avoid ghost instances when re-rendering
+  // IMPORTANT: esto evita que queden instancias viejas cuando re-renderizas
   interact(".module").unset();
 
   interact(".module")
     .draggable({
-      allowFrom: ".mod-top, .mod-body",
-      ignoreFrom: ".resize-handle, .icon-btn, .mod-actions",
+      // SIN allowFrom: para que funcione en spans/canvas/etc.
+      ignoreFrom: ".resize-handle, .icon-btn, .mod-actions, button, input, select, textarea, a",
       inertia: true,
       modifiers: [
         interact.modifiers.restrictRect({
-          restriction: (el) => el.closest(".grid"),
+          restriction: "parent",
           endOnly: true
         })
       ],
@@ -1091,26 +1088,22 @@ function setupInteract(){
         },
         move(event){
           const t = event.target;
-
-          // mover en px reales (left/top) dentro del grid
-          const left = (parsePx(t.style.left) || 0) + event.dx;
-          const top  = (parsePx(t.style.top)  || 0) + event.dy;
-
-          t.style.left = left + "px";
-          t.style.top = top + "px";
+          t.style.left = ((parsePx(t.style.left)||0) + event.dx) + "px";
+          t.style.top  = ((parsePx(t.style.top)||0)  + event.dy) + "px";
         },
         end(event){
           const t = event.target;
           t.classList.remove("is-dragging");
-          const gridEl = t.closest(".grid");
-          if(!gridEl) return;
+          const gridEl = t.parentElement;
+          if(!gridEl || !gridEl.classList.contains("grid")) return;
+
           snapPixelsToGrid(gridEl, t, false);
-          // re-colocar exacto al snap
           const sec = state.sections.find(s=>s.id===t.dataset.sectionId);
           const m = sec?.modules.find(x=>x.id===t.dataset.moduleId);
           if(m) placeModuleInPixels(gridEl, t, m);
-          adjustGridHeight(gridEl);
+
           save();
+          adjustGridHeight(gridEl);
         }
       }
     })
@@ -1118,12 +1111,8 @@ function setupInteract(){
       edges: { left:true, right:true, bottom:true, top:true },
       inertia: true,
       modifiers: [
-        interact.modifiers.restrictEdges({
-          outer: (el) => el.closest(".grid")
-        }),
-        interact.modifiers.restrictSize({
-          min: { width: 140, height: 140 }
-        })
+        interact.modifiers.restrictEdges({ outer: "parent" }),
+        interact.modifiers.restrictSize({ min: { width: 140, height: 140 } })
       ],
       listeners: {
         start(event){
@@ -1136,28 +1125,29 @@ function setupInteract(){
         move(event){
           const t = event.target;
 
-          const newLeft = (parsePx(t.style.left) || 0) + event.deltaRect.left;
-          const newTop  = (parsePx(t.style.top)  || 0) + event.deltaRect.top;
+          const newLeft = (parsePx(t.style.left)||0) + event.deltaRect.left;
+          const newTop  = (parsePx(t.style.top)||0)  + event.deltaRect.top;
 
           t.style.left = newLeft + "px";
-          t.style.top  = newTop + "px";
+          t.style.top  = newTop  + "px";
           t.style.width  = event.rect.width + "px";
           t.style.height = event.rect.height + "px";
         },
         end(event){
           const t = event.target;
           t.classList.remove("is-dragging");
-          const gridEl = t.closest(".grid");
-          if(!gridEl) return;
+          const gridEl = t.parentElement;
+          if(!gridEl || !gridEl.classList.contains("grid")) return;
 
           snapPixelsToGrid(gridEl, t, true);
           const sec = state.sections.find(s=>s.id===t.dataset.sectionId);
           const m = sec?.modules.find(x=>x.id===t.dataset.moduleId);
           if(m) placeModuleInPixels(gridEl, t, m);
 
-          adjustGridHeight(gridEl);
           save();
-          // re-render para actualizar charts correctamente con el nuevo tamaño
+          adjustGridHeight(gridEl);
+
+          // Re-render para refrescar charts al nuevo tamaño
           render();
         }
       }
@@ -1233,15 +1223,13 @@ function adjustGridHeight(gridEl){
   const rootStyle = getComputedStyle(document.documentElement);
   const gap  = parsePx(rootStyle.getPropertyValue("--gap"));
   const rowH = parsePx(rootStyle.getPropertyValue("--row"));
+  const pad  = parsePx(rootStyle.getPropertyValue("--gridPad"));
 
-  // calcular fila máxima utilizada
   const maxRow = sec.modules.reduce((mx, m)=> Math.max(mx, m.y + m.h - 1), 1);
-  const pad = parsePx(rootStyle.getPropertyValue("--gridPad"));
   const height = pad*2 + (maxRow * rowH) + ((maxRow - 1) * gap);
 
   gridEl.style.minHeight = Math.max(height, rowH * 8) + "px";
 }
-
 function adjustAllGridHeights(){
   document.querySelectorAll(".grid").forEach(adjustGridHeight);
 }
@@ -1279,11 +1267,8 @@ function isModuleLockedEl(moduleEl){
 load();
 render();
 
-// Recalcular posiciones en resize (responsive)
-window.addEventListener("resize", ()=>{
-  // re-render re-coloca módulos según nuevo ancho/cols
-  render();
-});
+window.addEventListener("resize", ()=> render());
 </script>
 </body>
 </html>
+
