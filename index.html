@@ -402,13 +402,14 @@
       position:absolute;
       right:8px;
       bottom:8px;
-      width:12px;
-      height:12px;
+      width:16px;
+      height:16px;
       border-right:3px solid #b8c2d3;
       border-bottom:3px solid #b8c2d3;
       border-radius:2px;
       opacity:.9;
-      pointer-events:none;
+      pointer-events:auto;
+      cursor:se-resize;
       z-index:3;
     }
 
@@ -451,7 +452,7 @@
     </label>
 
     <div class="hint">
-      <div class="chip">Arrastra por el encabezado</div>
+      <div class="chip">Arrastra por el encabezado o el cuerpo</div>
       <div class="chip">Redimensiona desde bordes/esquina</div>
       <div class="chip">Click para seleccionar</div>
       <div class="chip">Auto-guardado</div>
@@ -514,18 +515,12 @@ function demoState(){
     mod("card","Complejidad PT", 8, 6, 5, 6, { metric:{ value:"ALTO", label:"Complejidad PT", sub:"(Ejemplo)" }, bigColor:"#111827" })
   );
 
-  // Sección 3 (Aquí estaba el problema de overlap)
+  // Sección 3
   s3.modules.push(
     mod("bar","Concurrencia ante fallas (hoy)", 1, 1, 6, 6, { data:{ labels:["Dentro","Fuera"], values:[94,9] } }),
     mod("pie","Documentos abiertos", 7, 1, 5, 6, { data:{ labels:["Arribado","Despachado","Asignado","En bandeja"], values:[319,102,260,38] } }),
-    
-    // Tareas del día (Col 1, Y 7)
     mod("bar","Tareas del día", 1, 7, 7, 6, { data:{ labels:["Ejecutadas","En ejecución","Asignadas"], values:[82,56,125] } }),
-    
-    // Efectividad (Col 8, Y 7)
     mod("card","Efectividad de despacho", 8, 7, 4, 3, { metric:{ value:"0.89%", label:"Efectividad de despacho" } }),
-    
-    // CORRECCIÓN: Movido a la fila 10 y Columna 8 (o nueva línea) para evitar overlap con "Efectividad"
     mod("card","Ocupación Brigada", 8, 10, 4, 3, { metric:{ value:"80%", label:"Ocupación Brigada" } })
   );
 
@@ -982,7 +977,7 @@ function editModule(sectionId, moduleId){
       const n = Number(score);
       if(Number.isFinite(n)) m.config.status.score = n;
     }
-    const desc = prompt("Descripción (usa \\n para saltos):", String(m.config.status?.desc ?? ""));
+    const desc = prompt("Descripción (usa \n para saltos):", String(m.config.status?.desc ?? ""));
     if(desc !== null) m.config.status.desc = desc.replaceAll("\\n", "\n");
 
     const pin = prompt("Pin 0..1 (ej: 0.72):", String(m.config.status?.pin ?? 0.5));
@@ -1012,7 +1007,8 @@ function setupInteract(){
 
   interact(".module")
     .draggable({
-      allowFrom: ".mod-top",
+      allowFrom: ".mod-top, .mod-body",
+      ignoreFrom: ".resize-handle, .icon-btn, .mod-actions",
       inertia: true,
       modifiers: [
         interact.modifiers.restrictRect({
